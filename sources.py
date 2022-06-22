@@ -1,6 +1,7 @@
 import redis
 import psycopg2
 import requests
+import mysql.connector
 from abc import ABC, abstractmethod
 
 
@@ -114,7 +115,81 @@ class MySqlSource(DataSource):
     """
     Источник mysql.
     """
-    pass
+    def __init__(self, **kwargs):
+        self.dbname = kwargs.get('dbname')
+        self.host = kwargs.get('host')
+        self.port = kwargs.get('port')
+        self.user = kwargs.get('user')
+        self.password = kwargs.get('password')
+        self.connection = self.get_connection()
+
+    def get_tables(self):
+        """
+        Получение списка таблиц в базе.
+        Исключаются таблицы, содержащие системную информацию.
+        """
+
+        tables = []
+
+        with self.connection as conn:
+            cursor = conn.cursor()
+            q = "SELECT table_name FROM information_schema.tables "
+            q += "WHERE table_name NOT LIKE 'pg_%' AND "
+            q += "table_schema <> 'information_schema';"
+            cursor.execute(q)
+            res = cursor.fetchall()
+
+        tables = [r[0] for r in res]
+
+        return tables
+
+    def get_connection(self, **kwargs):
+        """
+        Создание соединения с базой.
+        """
+
+        conn = mysql.connector.connect(
+            host=self.host,
+            port=self.port,
+            database=self.dbname,
+            user=self.user,
+            password=self.password,
+        )
+
+        return conn
+
+    def get_data(self, query, **kwargs):
+        """
+        Получение данных/выполнение sql-запроса.
+        """
+
+        data = {}
+
+        with self.get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(query)
+                data = cursor.fetchall()
+
+        return data
+
+    def get_fields(self, table_name, **kwargs):
+        """
+        Получение списка полей в таблице.
+
+        table_name - имя таблицы из бд.
+        """
+
+        fields = []
+
+        with self.connection as conn:
+            with conn.cursor() as cursor:
+                q = "SELECT column_name, data_type FROM information_schema.columns "
+                q += "WHERE table_name = %s"
+                cursor.execute(q, (table_name, ))
+                res = cursor.fetchall()
+                fields = [column[0] for column in res]
+
+        return fields
 
 
 class MSSql(DataSource):
