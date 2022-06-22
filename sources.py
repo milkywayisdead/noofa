@@ -1,8 +1,10 @@
+import json
 import redis
 import psycopg2
 import requests
 import mysql.connector
 from abc import ABC, abstractmethod
+from random import choice
 
 
 class DataSource(ABC):
@@ -12,93 +14,36 @@ class DataSource(ABC):
 
     @abstractmethod
     def get_connection(self):
+        """
+        Создание соединения.
+        """
         pass
 
     @abstractmethod
     def get_data(self):
+        """
+        Получение данных.
+        """
         pass
 
 
-class PostgresSource(DataSource):
-    """
-    Источник postgres.
-    """
-
-    def __init__(self, **kwargs):
-        self.dbname = kwargs.get('dbname')
-        self.host = kwargs.get('host')
-        self.port = kwargs.get('port')
-        self.user = kwargs.get('user')
-        self.password = kwargs.get('password')
-        self.connection = self.get_connection()
-
+class DatabaseSource(DataSource):
+    @abstractmethod
     def get_tables(self):
         """
         Получение списка таблиц в базе.
         Исключаются таблицы, содержащие системную информацию.
         """
+        pass
 
-        tables = []
-
-        with self.connection as conn:
-            cursor = conn.cursor()
-            q = "SELECT table_name FROM information_schema.tables "
-            q += "WHERE table_name NOT LIKE 'pg_%' AND "
-            q += "table_schema <> 'information_schema';"
-            cursor.execute(q)
-            res = cursor.fetchall()
-
-        tables = [r[0] for r in res]
-
-        return tables
-
-    def get_connection(self, **kwargs):
-        """
-        Создание соединения с базой.
-        """
-
-        conn = psycopg2.connect(
-            host=self.host,
-            port=self.port,
-            dbname=self.dbname,
-            user=self.user,
-            password=self.password,
-        )
-
-        return conn
-
-    def get_data(self, query, **kwargs):
-        """
-        Получение данных/выполнение sql-запроса.
-        """
-
-        data = {}
-
-        with self.get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(query)
-                data = cursor.fetchall()
-
-        return data
-
+    @abstractmethod
     def get_fields(self, table_name, **kwargs):
         """
         Получение списка полей в таблице.
 
         table_name - имя таблицы из бд.
         """
-
-        fields = []
-
-        with self.connection as conn:
-            with conn.cursor() as cursor:
-                q = "SELECT column_name, data_type FROM information_schema.columns "
-                q += "WHERE table_name = %s"
-                cursor.execute(q, (table_name, ))
-                res = cursor.fetchall()
-                fields = [column[0] for column in res]
-
-        return fields
+        pass
 
     def get_table(self, table_name):
         """
@@ -111,28 +56,23 @@ class PostgresSource(DataSource):
         return Table(table_name, self.get_fields(table_name))
 
 
-class MySqlSource(DataSource):
+class PostgresSource(DatabaseSource):
     """
-    Источник mysql.
+    Источник postgres.
     """
+
     def __init__(self, **kwargs):
-        self.dbname = kwargs.get('dbname')
-        self.host = kwargs.get('host')
-        self.port = kwargs.get('port')
-        self.user = kwargs.get('user')
-        self.password = kwargs.get('password')
+        self._dbname = kwargs.get('dbname')
+        self._host = kwargs.get('host')
+        self._port = kwargs.get('port', 5432)
+        self._user = kwargs.get('user')
+        self._password = kwargs.get('password')
         self.connection = self.get_connection()
 
     def get_tables(self):
-        """
-        Получение списка таблиц в базе.
-        Исключаются таблицы, содержащие системную информацию.
-        """
-
         tables = []
 
-        with self.connection as conn:
-            cursor = conn.cursor()
+        with self.connection.cursor() as cursor:
             q = "SELECT table_name FROM information_schema.tables "
             q += "WHERE table_name NOT LIKE 'pg_%' AND "
             q += "table_schema <> 'information_schema';"
@@ -144,77 +84,112 @@ class MySqlSource(DataSource):
         return tables
 
     def get_connection(self, **kwargs):
-        """
-        Создание соединения с базой.
-        """
-
-        conn = mysql.connector.connect(
-            host=self.host,
-            port=self.port,
-            database=self.dbname,
-            user=self.user,
-            password=self.password,
+        conn = psycopg2.connect(
+            host=self._host,
+            port=self._port,
+            dbname=self._dbname,
+            user=self._user,
+            password=self._password,
         )
 
         return conn
 
     def get_data(self, query, **kwargs):
-        """
-        Получение данных/выполнение sql-запроса.
-        """
-
         data = {}
 
-        with self.get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(query)
-                data = cursor.fetchall()
+        with self.connection.cursor() as cursor:
+            cursor.execute(query)
+            data = cursor.fetchall()
 
         return data
 
     def get_fields(self, table_name, **kwargs):
-        """
-        Получение списка полей в таблице.
-
-        table_name - имя таблицы из бд.
-        """
-
         fields = []
 
-        with self.connection as conn:
-            with conn.cursor() as cursor:
-                q = "SELECT column_name, data_type FROM information_schema.columns "
-                q += "WHERE table_name = %s"
-                cursor.execute(q, (table_name, ))
-                res = cursor.fetchall()
-                fields = [column[0] for column in res]
+        with self.connection.cursor() as cursor:
+            q = "SELECT column_name, data_type FROM information_schema.columns "
+            q += "WHERE table_name = %s"
+            cursor.execute(q, (table_name, ))
+            res = cursor.fetchall()
+            fields = [column[0] for column in res]
 
         return fields
 
 
-class MSSql(DataSource):
+class MySqlSource(DatabaseSource):
     """
-    Источник mssqlserver.
+    Источник mysql.
     """
-    pass
+    def __init__(self, **kwargs):
+        self._dbname = kwargs.get('dbname')
+        self._host = kwargs.get('host')
+        self._port = kwargs.get('port', 3306)
+        self._user = kwargs.get('user')
+        self._password = kwargs.get('password')
+        self.connection = self.get_connection()
+
+    def get_tables(self):
+        tables = []
+
+        with self.connection.cursor() as cursor:
+            q = "SELECT table_name FROM information_schema.tables "
+            q += "WHERE table_schema <> 'information_schema';"
+            cursor.execute(q)
+            res = cursor.fetchall()
+
+        tables = [r[0] for r in res]
+
+        return tables
+
+    def get_connection(self, **kwargs):
+        conn = mysql.connector.connect(
+            host=self._host,
+            port=self._port,
+            database=self._dbname,
+            user=self._user,
+            password=self._password,
+        )
+
+        return conn
+
+    def get_data(self, query, **kwargs):
+        data = {}
+
+        with self.connection.cursor() as cursor:
+            cursor.execute(query)
+            data = cursor.fetchall()
+
+        return data
+
+    def get_fields(self, table_name, **kwargs):
+        fields = []
+
+        with self.connection.cursor() as cursor:
+            q = "SELECT column_name, data_type FROM information_schema.columns "
+            q += "WHERE table_name = %s"
+            cursor.execute(q, (table_name, ))
+            res = cursor.fetchall()
+            fields = [column[0] for column in res]
+
+        return fields
 
 
 class RedisSource(DataSource):
     def __init__(self, **kwargs):
-        self.host = kwargs.get('host', 'localhost')
-        self.port = kwargs.get('port', 6379)
-        self.db = kwargs.get('db', 0)
-        self.username = kwargs.get('user', None)
-        self.password = kwargs.get('password', None)
-        self.source = kwargs.get('source')
+        self._host = kwargs.get('host', 'localhost')
+        self._port = kwargs.get('port', 6379)
+        self._db = kwargs.get('db', 0)
+        self._username = kwargs.get('user', None)
+        self._password = kwargs.get('password', None)
+        self.source = kwargs.get('source', '')
 
     def get_connection(self, **kwargs):
         conn = redis.Redis(
-            host=self.host,
-            port=self.port,
-            db=self.db,
-            username=self.username,
-            password=self.password
+            host=self._host,
+            port=self._port,
+            db=self._db,
+            username=self._username,
+            password=self._password,
         )
 
         return conn
@@ -232,15 +207,20 @@ class RedisSource(DataSource):
 
         with self.get_connection() as conn:
             if conn.hlen(self.source):
-                pass
+                rand_key = choice(conn.hkeys(self.source))
+                rand_value = conn.hget(self.source, rand_key)
+                rand_value = json.loads(rand_value)
+                fields = list(rand_value.keys())
+
+        return fields
 
 
 class JsonSource(DataSource):
     def __init__(self, url, **kwargs):
-        self.url = kwargs.get('url')
-        self.params = kwargs.get('params', {})
-        self.headers = kwargs.get('headers', {})
-        self.auth = kwargs.get('auth', ())
+        self._url = url
+        self._params = kwargs.get('params', {})
+        self._headers = kwargs.get('headers', {})
+        self._auth = kwargs.get('auth', ())
 
     def get_connection(self, **kwargs):
         conn = requests.Session()
@@ -251,10 +231,10 @@ class JsonSource(DataSource):
 
         with self.get_connection() as conn:
             resp = conn.get(
-                self.url,
-                headers=self.headers,
-                auth=self.auth,
-                params=self.params
+                self._url,
+                headers=self._headers,
+                auth=self._auth,
+                params=self._params
             )
 
             data = resp.json()
