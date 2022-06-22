@@ -110,6 +110,20 @@ class PostgresSource(DataSource):
         return Table(table_name, self.get_fields(table_name))
 
 
+class MySqlSource(DataSource):
+    """
+    Источник mysql.
+    """
+    pass
+
+
+class MSSql(DataSource):
+    """
+    Источник mssqlserver.
+    """
+    pass
+
+
 class RedisSource(DataSource):
     def __init__(self, **kwargs):
         self.host = kwargs.get('host', 'localhost')
