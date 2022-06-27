@@ -52,7 +52,7 @@ class DatabaseSource(DataSource):
         table_name - имя таблицы из бд.
         """
 
-        from query import Table
+        from .query import Table
         return Table(table_name, self.get_fields(table_name))
 
 
@@ -95,11 +95,18 @@ class PostgresSource(DatabaseSource):
         return conn
 
     def get_data(self, query, **kwargs):
-        data = {}
+        data = []
 
         with self.connection.cursor() as cursor:
             cursor.execute(query)
-            data = cursor.fetchall()
+            _data = cursor.fetchall()
+            desc = [i.name for i in cursor.description]
+            
+            for d in _data:
+                datapiece = {}
+                for n, i in enumerate(d):
+                    datapiece[desc[n]] = i
+                data.append(datapiece)
 
         return data
 
@@ -153,11 +160,18 @@ class MySqlSource(DatabaseSource):
         return conn
 
     def get_data(self, query, **kwargs):
-        data = {}
+        data = []
 
         with self.connection.cursor() as cursor:
             cursor.execute(query)
-            data = cursor.fetchall()
+            _data = cursor.fetchall()
+            desc = [i[0] for i in cursor.description]
+            
+            for d in _data:
+                datapiece = {}
+                for n, i in enumerate(d):
+                    datapiece[desc[n]] = i
+                data.append(datapiece)
 
         return data
 
@@ -195,10 +209,13 @@ class RedisSource(DataSource):
         return conn
 
     def get_data(self, **kwargs):
-        data = {}
+        data = []
 
         with self.get_connection() as conn:
-            data = conn.hgetall(self.source)
+            _data = conn.hgetall(self.source)
+
+            for k, d in _data.items():
+                data.append(json.loads(d))
 
         return data
 

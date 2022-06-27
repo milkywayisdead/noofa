@@ -146,9 +146,8 @@ class Q:
     Составной фильтр.
     """
     def __init__(self, *filters):
-        self._filters = []
+        self._filters = ['AND', ]
         self._params = []
-        self._q = []
 
         for f in filters:
             self._filters.append(f)
@@ -161,29 +160,47 @@ class Q:
         Список параметров в фильтрах запроса.
         """
         return self._params
+
+    def to_str(self, filters):
+        op = f' {filters[0]} '
+        res = []
+        for i in filters[1:]:
+            if type(i) is str:
+                continue
+            if type(i) is list:
+                res.append(self.to_str(i))
+            else:
+                res.append(str(i))
+        return f'({op.join(res)})'
     
     def __str__(self):
         filters = [str(f) for f in self._filters]
-        s = f"({' AND '.join(filters)})"
-
-        if self._q:
-            for f in self._q:
-                s += f" {f[1]} {str(f[0])}"
+        s = ''
+        if filters:
+            s = f"{' AND '.join(filters)}"
 
         return s
 
     def __and__(self, value):
         if type(value) is Q:
-            self._q.append((value, 'AND'))
-            self._params += value._params
-            return self
+            q = Q()
+            q._filters = ['AND', ]
+            q._filters.append(self._filters)
+            q._filters.append(value._filters)
+            q._params += self._params
+            q._params += value._params
+            return q
         raise TypeError(f'Недопустимый операнд: {value}')
 
     def __or__(self, value):
         if type(value) is Q:
-            self._q.append((value, 'OR'))
-            self._params += value._params
-            return self
+            q = Q()
+            q._filters = ['OR', ]
+            q._filters.append(self._filters)
+            q._filters.append(value._filters)
+            q._params += self._params
+            q._params += value._params
+            return q
         raise TypeError(f'Недопустимый операнд: {value}')
 
 
