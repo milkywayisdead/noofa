@@ -57,6 +57,12 @@ class SelectQuery:
 
         self.values(*fields)
 
+    @property
+    def _requested(self):
+        if self._values:
+            return self._values
+        return self._fields
+
     def join(self, *joins):
         """
         Добавление объединения/объединений в запрос.
@@ -82,7 +88,10 @@ class SelectQuery:
         Добавление фильтров в запрос.
         """
         for f in filters:
-            self._where.append(f)
+            if type(f) is Q:
+                self._where.append(f)
+            else:
+                self._where.append(Q(f))
             for p in f._params:
                 self._params.append(p)
 
@@ -103,7 +112,7 @@ class SelectQuery:
             else:
                 raise NoSuchFieldError(f'Поле {f} недоступно в запросе')
 
-    def execute(self, cursor):
+    def _execute(self, cursor):
         q = str(self)
         params = self._params
 
@@ -113,6 +122,9 @@ class SelectQuery:
             cursor.execute(q)
 
         return cursor.fetchall()
+
+    def _str_and_params(self):
+        return (str(self), self._params)
 
     def __str__(self):
         if self._values:
@@ -161,25 +173,29 @@ class Q:
         """
         return self._params
 
-    def to_str(self, filters):
+    def _to_str(self, filters):
         op = f' {filters[0]} '
         res = []
         for i in filters[1:]:
             if type(i) is str:
                 continue
             if type(i) is list:
-                res.append(self.to_str(i))
+                i = self._to_str(i)
+                if i:
+                    res.append(i)
             else:
-                res.append(str(i))
-        return f'({op.join(res)})'
-    
-    def __str__(self):
-        filters = [str(f) for f in self._filters]
-        s = ''
-        if filters:
-            s = f"{' AND '.join(filters)}"
+                i = str(i)
+                if i:
+                    res.append(i)
+
+        s = f'{op.join(res)}'
+        if len(res) > 1:
+            s = f'({s})'
 
         return s
+    
+    def __str__(self):
+        return self._to_str(self._filters)
 
     def __and__(self, value):
         if type(value) is Q:
@@ -256,8 +272,8 @@ class InFilter:
             self._params = [p for p in values_range._params]
             self._subquery = values_range
         else:
-            values_range = tuple(values_range)
-            self._params = [values_range]
+            #values_range = tuple(values_range)
+            self._params = values_range  #[values_range]
             self._subquery = None
 
     def __str__(self):
@@ -268,7 +284,11 @@ class InFilter:
         if self._subquery is not None:
             return f'{self._field_name} {operator} ({str(self._subquery)})'
         else:
-            return f'{self._field_name} {operator} %s'
+            if self._params:
+                params_list = ', '.join(['%s']*len(self._params))
+                return f'{self._field_name} {operator} (%s)' % params_list
+            else:
+                return f'{self._field_name} {operator} %s'
 
     def __neg__(self):
         self._not = not self._not

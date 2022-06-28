@@ -95,12 +95,19 @@ class PostgresSource(DatabaseSource):
         return conn
 
     def get_data(self, query, **kwargs):
+        q, params = query._str_and_params()
+        fields = query._requested
         data = []
 
         with self.connection.cursor() as cursor:
-            cursor.execute(query)
+            if params:
+                cursor.execute(q, params)
+            else:
+                cursor.execute(q)
+
             _data = cursor.fetchall()
-            desc = [i.name for i in cursor.description]
+            #desc = [i.name for i in cursor.description]
+            desc = fields
             
             for d in _data:
                 datapiece = {}
@@ -160,12 +167,19 @@ class MySqlSource(DatabaseSource):
         return conn
 
     def get_data(self, query, **kwargs):
+        q, params = query._str_and_params()
+        fields = query._requested
         data = []
 
         with self.connection.cursor() as cursor:
-            cursor.execute(query)
+            if params:
+                cursor.execute(q, params)
+            else:
+                cursor.execute(q)
+
             _data = cursor.fetchall()
-            desc = [i[0] for i in cursor.description]
+            #desc = [i[0] for i in cursor.description]
+            desc = fields
             
             for d in _data:
                 datapiece = {}
