@@ -67,7 +67,7 @@ class PostgresSource(DatabaseSource):
         self._port = kwargs.get('port', 5432)
         self._user = kwargs.get('user')
         self._password = kwargs.get('password')
-        self.connection = self.get_connection()
+        self.connection = None
 
     def get_tables(self):
         tables = []
@@ -93,6 +93,11 @@ class PostgresSource(DatabaseSource):
         )
 
         return conn
+
+    def connect(self):
+        if self.connection is not None:
+            self.connection.close()
+        self.connection = self.get_connection()
 
     def get_data(self, query, **kwargs):
         q, params = query._str_and_params()
@@ -140,7 +145,7 @@ class MySqlSource(DatabaseSource):
         self._port = kwargs.get('port', 3306)
         self._user = kwargs.get('user')
         self._password = kwargs.get('password')
-        self.connection = self.get_connection()
+        self.connection = None
 
     def get_tables(self):
         tables = []
@@ -165,6 +170,11 @@ class MySqlSource(DatabaseSource):
         )
 
         return conn
+
+    def connect(self):
+        if self.connection is not None:
+            self.connection.close()
+        self.connection = self.get_connection()
 
     def get_data(self, query, **kwargs):
         q, params = query._str_and_params()
@@ -210,6 +220,7 @@ class RedisSource(DataSource):
         self._username = kwargs.get('user', None)
         self._password = kwargs.get('password', None)
         self.source = kwargs.get('source', '')
+        self.connection = None
 
     def get_connection(self, **kwargs):
         conn = redis.Redis(
@@ -222,10 +233,15 @@ class RedisSource(DataSource):
 
         return conn
 
+    def connect(self):
+        if self.connection is not None:
+            self.connection.close()
+        self.connection = self.get_connection()
+
     def get_data(self, **kwargs):
         data = []
 
-        with self.get_connection() as conn:
+        with self.connection as conn:
             _data = conn.hgetall(self.source)
 
             for k, d in _data.items():
@@ -236,7 +252,7 @@ class RedisSource(DataSource):
     def get_fields(self, **kwargs):
         fields = []
 
-        with self.get_connection() as conn:
+        with self.connection as conn:
             if conn.hlen(self.source):
                 rand_key = choice(conn.hkeys(self.source))
                 rand_value = conn.hget(self.source, rand_key)
@@ -252,15 +268,21 @@ class JsonSource(DataSource):
         self._params = kwargs.get('params', {})
         self._headers = kwargs.get('headers', {})
         self._auth = kwargs.get('auth', ())
+        self.connection = None
 
     def get_connection(self, **kwargs):
         conn = requests.Session()
         return conn
 
+    def connect(self):
+        if self.connection is not None:
+            self.connection.close()
+        self.connection = self.get_connection()
+
     def get_data(self, **kwargs):
         data = {}
 
-        with self.get_connection() as conn:
+        with self.connection as conn:
             resp = conn.get(
                 self._url,
                 headers=self._headers,
@@ -273,4 +295,4 @@ class JsonSource(DataSource):
         return data
 
     def get_fields(self, **kwargs):
-        pass
+        return []

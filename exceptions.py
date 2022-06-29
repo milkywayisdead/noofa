@@ -1,0 +1,2 @@
+class NoSuchFieldError(Exception):
+    pass

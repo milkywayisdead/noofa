@@ -1,9 +1,4 @@
-
-class NoSuchFieldError(Exception):
-    pass
-
-
-# ДОБАВИТЬ ПРОВЕРКУ ОБЪЕДИНЕНИЙ, ФИЛЬТРОВ И ПОЛЕЙ НА УНИКАЛЬНОСТЬ?
+from .exceptions import NoSuchFieldError
 
 
 class Join:
@@ -381,6 +376,9 @@ class ColumnSet:
         for col in columns:
             setattr(self, col._name, col)
 
+    def __getitem__(self, key):
+        return getattr(self, key)
+
 
 class FieldSet:
     """
@@ -390,6 +388,9 @@ class FieldSet:
     def __init__(self, fields):
         for field in fields:
             setattr(self, field._name, field)
+
+    def __getitem__(self, key):
+        return getattr(self, key)
 
 
 class Table:
