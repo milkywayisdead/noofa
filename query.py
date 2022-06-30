@@ -45,7 +45,7 @@ class SelectQuery:
         self._joins = []  # список объединений в запросе
         self._params = []  # список параметров для фильтров запроса
         self._table = table  # таблица
-        self._values = []
+        self._values = []  # список запрашиваемых полей
 
         for f in table.get_verbose_names():
             self._fields.append(f)
@@ -84,7 +84,8 @@ class SelectQuery:
         """
         for f in filters:
             if type(f) is Q:
-                self._where.append(f)
+                if not f.is_empty:
+                    self._where.append(f)
             else:
                 self._where.append(Q(f))
             for p in f._params:
@@ -162,6 +163,13 @@ class Q:
                 self._params.append(p)
 
     @property
+    def is_empty(self):
+        """
+        Является фильтр пустым, т.е. не содержащим дургие фильтры.
+        """
+        return len(self._filters) < 2 
+
+    @property
     def params(self):
         """
         Список параметров в фильтрах запроса.
@@ -193,7 +201,15 @@ class Q:
         return self._to_str(self._filters)
 
     def __and__(self, value):
+        """
+        Логическое умножение (AND) с другими составными фильтрами.
+        """
         if type(value) is Q:
+            if value.is_empty:
+                return self
+            if self.is_empty:
+                return value
+
             q = Q()
             q._filters = ['AND', ]
             q._filters.append(self._filters)
@@ -204,7 +220,15 @@ class Q:
         raise TypeError(f'Недопустимый операнд: {value}')
 
     def __or__(self, value):
+        """
+        Логическое сложение (OR) с другими составными фильтрами.
+        """
         if type(value) is Q:
+            if value.is_empty:
+                return self
+            if self.is_empty:
+                return value
+
             q = Q()
             q._filters = ['OR', ]
             q._filters.append(self._filters)

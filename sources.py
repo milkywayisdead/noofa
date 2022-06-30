@@ -94,10 +94,13 @@ class PostgresSource(DatabaseSource):
 
         return conn
 
-    def connect(self):
+    def open(self):
         if self.connection is not None:
             self.connection.close()
         self.connection = self.get_connection()
+
+    def close(self):
+        self.connection.close()
 
     def get_data(self, query, **kwargs):
         q, params = query._str_and_params()
@@ -171,10 +174,13 @@ class MySqlSource(DatabaseSource):
 
         return conn
 
-    def connect(self):
+    def open(self):
         if self.connection is not None:
             self.connection.close()
         self.connection = self.get_connection()
+
+    def close(self):
+        self.connection.close()
 
     def get_data(self, query, **kwargs):
         q, params = query._str_and_params()
@@ -233,10 +239,13 @@ class RedisSource(DataSource):
 
         return conn
 
-    def connect(self):
+    def open(self):
         if self.connection is not None:
             self.connection.close()
         self.connection = self.get_connection()
+
+    def close(self):
+        self.connection.close()
 
     def get_data(self, **kwargs):
         data = []
@@ -274,10 +283,13 @@ class JsonSource(DataSource):
         conn = requests.Session()
         return conn
 
-    def connect(self):
+    def open(self):
         if self.connection is not None:
             self.connection.close()
         self.connection = self.get_connection()
+
+    def close(self):
+        self.connection.close()
 
     def get_data(self, **kwargs):
         data = {}
