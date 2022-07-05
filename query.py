@@ -200,10 +200,7 @@ class Q:
     def __str__(self):
         return self._to_str(self._filters)
 
-    def __and__(self, value):
-        """
-        Логическое умножение (AND) с другими составными фильтрами.
-        """
+    def _add_q(self, value, disj=False):
         if type(value) is Q:
             if value.is_empty:
                 return self
@@ -211,32 +208,29 @@ class Q:
                 return value
 
             q = Q()
-            q._filters = ['AND', ]
+            if disj:
+                q._filters = ['OR', ]
+            else:
+                q._filters = ['AND', ]
+
             q._filters.append(self._filters)
             q._filters.append(value._filters)
             q._params += self._params
             q._params += value._params
             return q
-        raise TypeError(f'Недопустимый операнд: {value}')
+        raise TypeError(f'Недопустимый операнд: {value}')       
+
+    def __and__(self, value):
+        """
+        Логическое умножение (AND) с другими составными фильтрами.
+        """
+        return self._add_q(value)
 
     def __or__(self, value):
         """
         Логическое сложение (OR) с другими составными фильтрами.
         """
-        if type(value) is Q:
-            if value.is_empty:
-                return self
-            if self.is_empty:
-                return value
-
-            q = Q()
-            q._filters = ['OR', ]
-            q._filters.append(self._filters)
-            q._filters.append(value._filters)
-            q._params += self._params
-            q._params += value._params
-            return q
-        raise TypeError(f'Недопустимый операнд: {value}')
+        return self._add_q(value, disj=True)
 
 
 class Filter:

@@ -63,6 +63,7 @@ class Qbuilder:
     # и запрос в виде словаря
     def __init__(self, tables, query):
         self._source = None  # источник данных
+        self._base = query['base']
         self._tables = tables  # словарь таблиц
         self._base_table = self._tables[self._base]  # базовая таблица
         self._joins_list = query.get('joins', [])  # список соединений в запросе
