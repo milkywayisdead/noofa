@@ -1,4 +1,4 @@
-from .exceptions import NoSuchFieldError
+from reports.exceptions import NoSuchFieldError
 
 
 class Join:

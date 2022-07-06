@@ -17,7 +17,11 @@ class Func:
     def __init__(self, *values):
         self._values = [v for v in values]
 
-    def go(self):
+    @property
+    def name(self):
+        return self.__class__.__name__.lower()
+
+    def __call__(self):
         n = self.__class__.operands_num
         op = self.__class__.operation
         unpack_values = self.__class__.unpack_values
