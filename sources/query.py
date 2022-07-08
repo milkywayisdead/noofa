@@ -46,6 +46,8 @@ class SelectQuery:
         self._params = []  # список параметров для фильтров запроса
         self._table = table  # таблица
         self._values = []  # список запрашиваемых полей
+        self._order_by = []
+        self._limit = None
 
         for f in table.get_verbose_names():
             self._fields.append(f)
@@ -108,6 +110,27 @@ class SelectQuery:
             else:
                 raise NoSuchFieldError(f'Поле {f} недоступно в запросе')
 
+    def limit(self, n):
+        try:
+            n = int(n)
+        except:
+            pass
+        else:
+            self._limit = n
+        return self
+
+    def order_by(self, *ords):
+        for o in ords:
+            field, sorting = o[0], o[1].upper()
+            if field in self._fields:
+                assert sorting in ['ASC', 'DESC'], 'Значение должно быть равно ASC либо DESC'
+                ordby = f'{field} {sorting}'
+                if ordby not in self._order_by:
+                    self._order_by.append(ordby)
+            else:
+                raise NoSuchFieldError(f'Поле {field} недоступно в запросе')
+        return self
+
     def _execute(self, cursor):
         q = str(self)
         params = self._params
@@ -145,6 +168,13 @@ class SelectQuery:
 
         if _where:
             q += f' WHERE {_where}'
+
+        if self._order_by:
+            ordby = f' ORDER BY {", ".join(self._order_by)}'
+            q += ordby
+
+        if self._limit is not None:
+            q += f' LIMIT {self._limit}'
 
         return q
 
