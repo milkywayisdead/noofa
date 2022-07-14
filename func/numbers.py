@@ -1,3 +1,7 @@
+"""
+Математические функции.
+"""
+
 import math
 from .base import MathFunc
 
@@ -270,10 +274,16 @@ class Sqrt(MathFunc):
 
 class Sum(MathFunc):
     description = 'Сумма нескольких чисел'
-    operation = sum
     args_description = [
-        {'name': 'Список слагаемых', 'index': 0, 'is_mandatory': True},
+        {'name': 'Слагаемое1', 'index': 0, 'is_mandatory': True},
+        {'name': 'Слагаемое2', 'index': 1, 'is_mandatory': True},
     ]
+
+    def _operation(self, *args):
+        result = 0
+        for arg in args:
+            result += arg
+        return result
 
 
 class Tan(MathFunc):

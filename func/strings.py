@@ -1,8 +1,9 @@
-from .base import Func
+"""
+Функции работы со строками.
+"""
 
+from .base import StrFunc
 
-def _contains(string, sub):
-    return sub in string
 
 def _endswith(string, sub):
     return string.endswith(sub)
@@ -26,70 +27,114 @@ def _join(string, substrings):
     return f'{string}'.join(substrings)
 
 
-class Contains(Func):
+class Contains(StrFunc):
     """
     Содержит ли строка другую строку.
     """
-    operation = _contains
-    operands_num = 2
-    unpack_values = True
+    description = 'Проверка, содержит ли строка другую строку'
+    args_description = [
+        {'name': 'Строка1', 'index': 0, 'is_mandatory': True},
+        {'name': 'Строка2', 'index': 1, 'is_mandatory': True},
+    ]
+
+    def _operation(self, *args):
+        return args[1] in args[0]
 
 
-class Endswith(Func):
+class Endswith(StrFunc):
     """
     Заканчивается ли строка другой строкой.
     """
-    operation = _endswith
-    operands_num = 2
-    unpack_values = True
+    description = 'Проверка, заканчивается ли строка другой строкой'
+    args_description = [
+        {'name': 'Строка1', 'index': 0, 'is_mandatory': True},
+        {'name': 'Строка2', 'index': 1, 'is_mandatory': True},
+    ]
+
+    def _operation(self, *args):
+        return args[0].endswith(args[1])
 
 
-class Len(Func):
+class Len(StrFunc):
     """
     Получение длины строки.
     """
+    description = 'Получение длины строки'
     operation = len
-    operands_num = 1
+    args_description = [
+        {'name': 'Строка', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Lower(Func):
+class Lower(StrFunc):
     """
     Перевод строки в нижний регистр.
     """
-    operation = _lower
-    operands_num = 1
+    description = 'Перевод строки в нижний регистр'
+    args_description = [
+        {'name': 'Строка', 'index': 0, 'is_mandatory': True},
+    ]
+
+    def _operation(self, *args):
+        return args[0].lower()
 
 
-class Upper(Func):
+class Upper(StrFunc):
     """
     Перевод строки в верхний регистр.
     """
-    operation = _upper
-    operands_num = 1
+    description = 'Перевод строки в верхний регистр'
+    args_description = [
+        {'name': 'Строка', 'index': 0, 'is_mandatory': True},
+    ]
+
+    def _operation(self, *args):
+        return args[0].upper()
 
 
-class Concat(Func):
+class Concat(StrFunc):
     """
     Сложение строк.
     """
-    operation = _concat
-    operands_num = -1
-    unpack_values = True
+    description = 'Сложение нескольких строк'
+    args_description = [
+        {'name': 'Строка1', 'index': 0, 'is_mandatory': True},
+        {'name': 'Строка2', 'index': 1, 'is_mandatory': True},
+    ]
+
+    def _operation(self, *args):
+        result = ''
+        for arg in args:
+            result += arg
+        return result
 
 
-class Join(Func):
+class Join(StrFunc):
     """
     Объединение строк по разделителю.
     """
-    operation = _join
-    operands_num = 2
-    unpack_values = True
+    description = 'Объединение строк через разделитель'
+    args_description = [
+        {'name': 'Разделитель', 'index': 0, 'is_mandatory': True},
+        {'name': 'Строка1', 'index': 1, 'is_mandatory': True},
+        {'name': 'Строка2', 'index': 2, 'is_mandatory': True},
+    ]
+
+    def _operation(self, *args):
+        sep = args[0]
+        subs = args[1:]
+        return sep.join(subs)
 
 
-class Startswith(Func):
+class Startswith(StrFunc):
     """
     Начинается ли строка с другой строки.
     """
-    operation = _startswith
-    operands_num = 2
-    unpack_values = True
+    description = 'Проверка, начинается ли строка другой строкой'
+    args_description = [
+        {'name': 'Строка1', 'index': 0, 'is_mandatory': True},
+        {'name': 'Строка2', 'index': 1, 'is_mandatory': True},
+    ]
+
+    def _operation(self, *args):
+        return args[0].startswith(args[1])
