@@ -77,6 +77,6 @@ class PandaEndsWith(PandaFilter):
         return self._panda_col.str.lower().str.endswith(self._value)
 
 
-class PandaIn(PandaFilter)
+class PandaIn(PandaFilter):
     def make(self):
         return self._panda_col.isin(self._values)

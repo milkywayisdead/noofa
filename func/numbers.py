@@ -1,221 +1,287 @@
 import math
-from .base import Func
+from .base import MathFunc
 
 
-def _cot(x):
-    try:
-        return 1/math.tan(x)
-    except ZeroDivisionError:
-        return math.inf
-
-def _div(x, y):
-    try:
-        return x/y
-    except ZeroDivisionError:
-        return math.inf
-
-def _idiv(x, y):
-    try:
-        return x//y
-    except ZeroDivisionError:
-        return math.inf
-
-
-class Abs(Func):
+class Abs(MathFunc):
     """
     Модуль числа.
     """
+    description = 'Получение модуля числа'
     operation = abs
-    operands_num = 1
+    args_description = [
+        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Acos(Func):
+class Acos(MathFunc):
     """
     Арккосинус числа.
     """
+    description = 'Получение арккосинуса числа'
     operation = math.acos
-    operands_num = 1
+    args_description = [
+        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Asin(Func):
+class Asin(MathFunc):
     """
     Арксинус числа.
     """
+    description = 'Получение арксинуса числа'
     operation = math.asin
-    operands_num = 1
+    args_description = [
+        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Atan(Func):
+class Atan(MathFunc):
     """
     Арктангенс числа.
     """
+    description = 'Получение арктангенса числа'
     operation = math.atan
-    operands_num = 1
+    args_description = [
+        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Atan2(Func):
+class Atan2(MathFunc):
     """
     Арктангенс частного двух чисел.
     """
+    description = 'Получение арктангенса x/y'
     operation = math.atan2
-    operands_num = 2
-    unpack_values = True
+    args_description = [
+        {'name': 'x', 'index': 0, 'is_mandatory': True},
+        {'name': 'y', 'index': 1, 'is_mandatory': True},
+    ]
 
 
-class Ceil(Func):
+class Ceil(MathFunc):
     """
     Округление числа до ближайшего целого
     в большую сторону.
     """
+    description = 'Округление числа в большую сторону'
     operation = math.ceil
-    operands_num = 1
+    args_description = [
+        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Cos(Func):
+class Cos(MathFunc):
     """
     Косинус угла в радианах.
     """
+    description = 'Получение косинуса угла. Значение угла - в радианах'
     operation = math.cos
-    operands_num = 1
+    args_description = [
+        {'name': 'Угол(рад)', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Cot(Func):
+class Cot(MathFunc):
     """
     Котангенс угла.
     """
-    operation = _cot
-    operands_num = 1
+    description = 'Получение котангенса угла. Значение угла - в радианах'
+    args_description = [
+        {'name': 'Угол(рад)', 'index': 0, 'is_mandatory': True},
+    ]
+
+    def _operation(self, *args):
+        try:
+            return 1/math.tan(args[0])
+        except ZeroDivisionError:
+            return math.inf        
 
 
-class Degrees(Func):
+class Degrees(MathFunc):
     """
     Перевод радиан в градусы.
     """
+    description = 'Перевод радиан в градусы'
     operation = math.degrees
-    operands_num = 1
+    args_description = [
+        {'name': 'Радианы', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Div(Func):
+class Div(MathFunc):
     """
     Деление.
     """
-    operation = _div
-    operands_num = 2
-    unpack_values = True
+    description = 'Деление двух чисел x/y с остатком'
+    args_description = [
+        {'name': 'x', 'index': 0, 'is_mandatory': True},
+        {'name': 'y', 'index': 1, 'is_mandatory': True},
+    ]
+
+    def _operation(self, *args):
+        try:
+            return args[0]/args[1]
+        except ZeroDivisionError:
+            return math.inf
 
 
-class Idiv(Func):
+class Idiv(MathFunc):
     """
     Целочисленное деление.
     """
-    operation = _idiv
-    operands_num = 2
-    unpack_values = True
+    description = 'Целочисленное деление двух чисел x/y'
+    args_description = [
+        {'name': 'x', 'index': 0, 'is_mandatory': True},
+        {'name': 'y', 'index': 1, 'is_mandatory': True},
+    ]
+
+    def _operation(self, *args):
+        try:
+            return arg[0]//arg[1]
+        except ZeroDivisionError:
+            return math.inf
 
 
-class Exp(Func):
+class Exp(MathFunc):
     """
     Вычисление экспоненты.
     """
+    description = 'Вычисление экспоненты'
     operation = math.exp
-    operands_num = 1
+    args_description = [
+        {'name': 'Степень', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Floor(Func):
+class Floor(MathFunc):
     """
     Округление до ближайшего целого 
     в меньшую сторону.
     """
+    description = 'Округление числа в меньшую сторону'
     operation = math.floor
-    operands_num = 1
+    args_description = [
+        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Ln(Func):
+class Ln(MathFunc):
     """
     Натуральный логарифм числа.
     """
+    description = 'Натуральный логарифм числа'
     operation = math.log
-    operands_num = 1
+    args_description = [
+        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Log(Func):
+class Log(MathFunc):
     """
     Вычисление логарифма x по основанию y.
     """
     operation = math.log
-    operands_num = 2
-    unpack_values = True
+    description = 'Вычисление логарифма числа по основанию'
+    operation = math.log
+    args_description = [
+        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+        {'name': 'Основание', 'index': 1, 'is_mandatory': True},
+    ]
 
 
-class Min(Func):
+class Min(MathFunc):
     """
     Минимальное число в наборе.
     """
+    description = 'Выбор наименьшего числа в наборе'
     operation = min
-    operands_num = -1
+    args_description = [
+        {'name': 'Набор чисел', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Max(Func):
+class Max(MathFunc):
     """
     Максимальное число в наборе.
     """
+    description = 'Выбор наибольшего числа в наборе'
     operation = max
-    operands_num = -1
+    args_description = [
+        {'name': 'Набор чисел', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Pow(Func):
+class Pow(MathFunc):
     """
     Возведение x в степень y.
     """
+    description = 'Возведение x в степень y'
     operation = pow
-    operands_num = 2
-    unpack_values = True
+    args_description = [
+        {'name': 'x', 'index': 0, 'is_mandatory': True},
+        {'name': 'y', 'index': 1, 'is_mandatory': True},
+    ]
 
 
-class Radians(Func):
+class Radians(MathFunc):
     """
     Перевод градусов в радианы.
     """
+    description = 'Перевод градусов в радианы'
     operation = math.radians
-    operands_num = 1
+    args_description = [
+        {'name': 'Градусы', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Round(Func):
+class Round(MathFunc):
     """
     Округление числа до определённого кол-ва знаков после запятой.
     """
+    description = 'Округление числа до определённого количества n знаков после запятой'
     operation = round
-    operands_num = 2
-    unpack_values = True
+    args_description = [
+        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+        {'name': 'n', 'index': 1, 'is_mandatory': False},
+    ]
 
 
-class Sin(Func):
+class Sin(MathFunc):
     """
     Синус угла в радианах.
     """
+    description = 'Получение синуса угла. Значение угла - в радианах'
     operation = math.sin
-    operands_num = 1
+    args_description = [
+        {'name': 'Угол(рад)', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Sqrt(Func):
+class Sqrt(MathFunc):
     """
     Извлечение квадратного корня числа.
     """
-    operation = math.sqrt
-    operands_num = 1
+    description = 'Перевод радиан в градусы'
+    operation = math.degrees
+    args_description = [
+        {'name': 'Радианы', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Sum(Func):
-    """
-    Сумма чисел.
-    """
+class Sum(MathFunc):
+    description = 'Сумма нескольких чисел'
     operation = sum
-    operands_num = -1
+    args_description = [
+        {'name': 'Список слагаемых', 'index': 0, 'is_mandatory': True},
+    ]
 
 
-class Tan(Func):
+class Tan(MathFunc):
     """
     Тангенс угла в радианах.
     """
+    description = 'Получение тангенса угла. Значение угла - в радианах'
     operation = math.tan
-    operands_num = 1
+    args_description = [
+        {'name': 'Угол(рад)', 'index': 0, 'is_mandatory': True},
+    ]

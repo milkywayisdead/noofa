@@ -12,6 +12,9 @@ class Panda:
     def df(self):
         return self._df
 
+    def __repr__(self):
+        return repr(self.df)
+
     @classmethod
     def is_panda(cls, obj):
         return type(obj) is cls
@@ -58,13 +61,28 @@ class Panda:
         """
         pass
 
-    def drop_column(self, col_name):
+    def rename_columns(self, rm_dict={}):
+        """
+        Переименование столбцов.
+        """
+        self._df.rename(columns=rm_dict, inplace=True)
+        return self
+
+    def drop_columns(self, col_name):
         """
         Удаление столбца.
         """
         self._df.drop(col_name, axis=1, inplace=True)
+        return self
 
-    def where(self, filter_):
+    def modify_column_type(self, col_name, to_type='str'):
+        """
+        Изменение типа данных в столбце.
+        """
+        to_type = kwargs.get('to_type', 'str')        
+        return self
+
+    def filter(self, filter_):
         """
         Отсеивание лишних строк.
         """
