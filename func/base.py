@@ -1,3 +1,33 @@
+class NonMandatoryArg:
+    """
+    Необязательный аргумент функции.
+    """
+    is_mandatory = False  # обязательный ли аргумент
+
+    def __init__(self, name, index, default=None):
+        self._name = name  # название
+        self._index = index  # порядковый номер в списке аргументов
+        self._default = default  # значение по умолчанию
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def is_mandatory(self):
+        """
+        Обязательный ли аргумент.
+        """
+        return self.__class__.is_mandatory
+
+
+class MandatoryArg(NonMandatoryArg):
+    """
+    Обязательный аргумент.
+    """
+    is_mandatory = True
+
+
 class Func:
     """
     Базовая функция.
@@ -5,11 +35,7 @@ class Func:
     description = 'Функция, которая ничего не делает'  # описание функции
 
     #  описание аргументов
-    args_description = [
-        {'name': 'arg0', 'index': 0, 'is_mandatory': True},
-        {'name': 'arg1', 'index': 1, 'is_mandatory': True},
-        {'name': 'arg2', 'index': 2, 'is_mandatory': False, 'default': 1},
-    ]
+    args_description = []
 
     group = 'str'  # группа, к которой относится функция (математическая, строковая и пр.)
     operation = None  # функция, которая будет выполняться
@@ -18,7 +44,7 @@ class Func:
         self._args = [arg for arg in args]  # переданные аргументы
         self._mandatory = 0
         for arg in self.__class__.args_description:
-            if arg['is_mandatory']:
+            if arg.is_mandatory:
                 self._mandatory += 1
 
     @property
@@ -105,3 +131,6 @@ class TypeconvFunc(Func):
     Функция преобразования типа.
     """
     group = 'typeconv'
+
+
+f = 'sum(1, 2) + div(11, 2)'

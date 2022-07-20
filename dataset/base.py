@@ -1,5 +1,7 @@
 from pandas import merge, concat, DataFrame
 
+from .filters import PandaQ, _FILTERS
+
 
 class Panda:
     """
@@ -14,10 +16,6 @@ class Panda:
 
     def __repr__(self):
         return repr(self.df)
-
-    @classmethod
-    def is_panda(cls, obj):
-        return type(obj) is cls
 
     @property
     def columns(self):
@@ -59,7 +57,8 @@ class Panda:
         """
         Добавление столбца.
         """
-        pass
+        self.df[col_name] = col_data
+        return self
 
     def rename_columns(self, rm_dict={}):
         """
@@ -79,14 +78,13 @@ class Panda:
         """
         Изменение типа данных в столбце.
         """
-        to_type = kwargs.get('to_type', 'str')        
-        return self
+        pass
 
-    def filter(self, filter_):
+    def filter(self, panda_filter):
         """
-        Отсеивание лишних строк.
+        Фильтрация строк.
         """
-        self._df = self.df[filter_]
+        self._df = self.df[panda_filter.filter]
         return self
 
     def order_by(self, by, **kwargs):
@@ -96,7 +94,6 @@ class Panda:
         asc = kwargs.get('asc', True)
         if asc not in [True, False]:
             asc = True
-
         self._df = self.df.sort_values(by=by, ascending=asc)
         return self
 
@@ -105,6 +102,38 @@ class Panda:
         Применение функции к датафрейму.
         """
         return self
+
+    def _parse_filter(self, jsf):
+        if jsf['is_q'] == True:
+            filters = []
+            for f in jsf['filters']:
+                filters.append(self._parse_filter(f))
+            op = jsf['op']
+            if op == 'or':
+                panda_filter = PandaQ()
+                for f in filters:
+                    panda_filter |= PandaQ(f)
+            else:
+                panda_filter = PandaQ(*filters)
+            return panda_filter
+        else:
+            col, op, value = jsf['col_name'], jsf['op'], jsf['value']
+            panda_filter = _FILTERS[op](col, value)
+            panda_filter.df(self.df)
+            return panda_filter
+
+    def parse_filters(self, jsfilters):
+        """
+        Построение фильтра из json.
+        """
+        filters = []
+        for f in jsfilters:
+            filters.append(self._parse_filter(f))
+        return PandaQ(*filters)
+
+
+
+
 
 
 def test():

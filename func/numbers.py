@@ -3,7 +3,7 @@
 """
 
 import math
-from .base import MathFunc
+from .base import MathFunc, NonMandatoryArg, MandatoryArg
 
 
 class Abs(MathFunc):
@@ -13,7 +13,7 @@ class Abs(MathFunc):
     description = 'Получение модуля числа'
     operation = abs
     args_description = [
-        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Число', 0),
     ]
 
 
@@ -24,7 +24,7 @@ class Acos(MathFunc):
     description = 'Получение арккосинуса числа'
     operation = math.acos
     args_description = [
-        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Число', 0),
     ]
 
 
@@ -35,7 +35,7 @@ class Asin(MathFunc):
     description = 'Получение арксинуса числа'
     operation = math.asin
     args_description = [
-        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Число', 0),
     ]
 
 
@@ -46,7 +46,7 @@ class Atan(MathFunc):
     description = 'Получение арктангенса числа'
     operation = math.atan
     args_description = [
-        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Число', 0),
     ]
 
 
@@ -57,8 +57,8 @@ class Atan2(MathFunc):
     description = 'Получение арктангенса x/y'
     operation = math.atan2
     args_description = [
-        {'name': 'x', 'index': 0, 'is_mandatory': True},
-        {'name': 'y', 'index': 1, 'is_mandatory': True},
+        MandatoryArg('x', 0),
+        MandatoryArg('y', 1),
     ]
 
 
@@ -70,7 +70,7 @@ class Ceil(MathFunc):
     description = 'Округление числа в большую сторону'
     operation = math.ceil
     args_description = [
-        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Число', 0),
     ]
 
 
@@ -81,7 +81,7 @@ class Cos(MathFunc):
     description = 'Получение косинуса угла. Значение угла - в радианах'
     operation = math.cos
     args_description = [
-        {'name': 'Угол(рад)', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Угол(рад)', 0),
     ]
 
 
@@ -91,7 +91,7 @@ class Cot(MathFunc):
     """
     description = 'Получение котангенса угла. Значение угла - в радианах'
     args_description = [
-        {'name': 'Угол(рад)', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Угол(рад)', 0),
     ]
 
     def _operation(self, *args):
@@ -108,7 +108,7 @@ class Degrees(MathFunc):
     description = 'Перевод радиан в градусы'
     operation = math.degrees
     args_description = [
-        {'name': 'Радианы', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Радианы', 0),
     ]
 
 
@@ -118,8 +118,8 @@ class Div(MathFunc):
     """
     description = 'Деление двух чисел x/y с остатком'
     args_description = [
-        {'name': 'x', 'index': 0, 'is_mandatory': True},
-        {'name': 'y', 'index': 1, 'is_mandatory': True},
+        MandatoryArg('x', 0),
+        MandatoryArg('y', 1),
     ]
 
     def _operation(self, *args):
@@ -135,8 +135,8 @@ class Idiv(MathFunc):
     """
     description = 'Целочисленное деление двух чисел x/y'
     args_description = [
-        {'name': 'x', 'index': 0, 'is_mandatory': True},
-        {'name': 'y', 'index': 1, 'is_mandatory': True},
+        MandatoryArg('x', 0),
+        MandatoryArg('y', 1),
     ]
 
     def _operation(self, *args):
@@ -153,7 +153,7 @@ class Exp(MathFunc):
     description = 'Вычисление экспоненты'
     operation = math.exp
     args_description = [
-        {'name': 'Степень', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Степень', 0),
     ]
 
 
@@ -165,7 +165,7 @@ class Floor(MathFunc):
     description = 'Округление числа в меньшую сторону'
     operation = math.floor
     args_description = [
-        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Число', 0),
     ]
 
 
@@ -176,7 +176,7 @@ class Ln(MathFunc):
     description = 'Натуральный логарифм числа'
     operation = math.log
     args_description = [
-        {'name': 'Число', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Число', 0),
     ]
 
 
@@ -188,8 +188,8 @@ class Log(MathFunc):
     description = 'Вычисление логарифма числа по основанию'
     operation = math.log
     args_description = [
-        {'name': 'Число', 'index': 0, 'is_mandatory': True},
-        {'name': 'Основание', 'index': 1, 'is_mandatory': True},
+        MandatoryArg('Число', 0),
+        MandatoryArg('Основание', 1),
     ]
 
 
@@ -200,7 +200,7 @@ class Min(MathFunc):
     description = 'Выбор наименьшего числа в наборе'
     operation = min
     args_description = [
-        {'name': 'Набор чисел', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Набор чисел', 0),
     ]
 
 
@@ -211,7 +211,7 @@ class Max(MathFunc):
     description = 'Выбор наибольшего числа в наборе'
     operation = max
     args_description = [
-        {'name': 'Набор чисел', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Набор чисел', 0),
     ]
 
 
@@ -222,8 +222,8 @@ class Pow(MathFunc):
     description = 'Возведение x в степень y'
     operation = pow
     args_description = [
-        {'name': 'x', 'index': 0, 'is_mandatory': True},
-        {'name': 'y', 'index': 1, 'is_mandatory': True},
+        MandatoryArg('x', 0),
+        MandatoryArg('y', 0),
     ]
 
 
@@ -234,7 +234,7 @@ class Radians(MathFunc):
     description = 'Перевод градусов в радианы'
     operation = math.radians
     args_description = [
-        {'name': 'Градусы', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Градусы', 0),
     ]
 
 
@@ -245,8 +245,8 @@ class Round(MathFunc):
     description = 'Округление числа до определённого количества n знаков после запятой'
     operation = round
     args_description = [
-        {'name': 'Число', 'index': 0, 'is_mandatory': True},
-        {'name': 'n', 'index': 1, 'is_mandatory': False},
+        MandatoryArg('Число', 0),
+        NonMandatoryArg('n', 1),
     ]
 
 
@@ -257,7 +257,7 @@ class Sin(MathFunc):
     description = 'Получение синуса угла. Значение угла - в радианах'
     operation = math.sin
     args_description = [
-        {'name': 'Угол(рад)', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Угол(рад)', 0),
     ]
 
 
@@ -265,18 +265,18 @@ class Sqrt(MathFunc):
     """
     Извлечение квадратного корня числа.
     """
-    description = 'Перевод радиан в градусы'
-    operation = math.degrees
+    description = 'Извлечение квадратного корня числа'
+    operation = math.sqrt
     args_description = [
-        {'name': 'Радианы', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Число', 0),
     ]
 
 
 class Sum(MathFunc):
     description = 'Сумма нескольких чисел'
     args_description = [
-        {'name': 'Слагаемое1', 'index': 0, 'is_mandatory': True},
-        {'name': 'Слагаемое2', 'index': 1, 'is_mandatory': True},
+        MandatoryArg('Слагаемое1', 0),
+        MandatoryArg('Слашаемое2', 1),
     ]
 
     def _operation(self, *args):
@@ -293,5 +293,5 @@ class Tan(MathFunc):
     description = 'Получение тангенса угла. Значение угла - в радианах'
     operation = math.tan
     args_description = [
-        {'name': 'Угол(рад)', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Угол(рад)', 0),
     ]
