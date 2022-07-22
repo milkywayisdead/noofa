@@ -2,12 +2,11 @@ class NonMandatoryArg:
     """
     Необязательный аргумент функции.
     """
-    is_mandatory = False  # обязательный ли аргумент
+    mandatory = False  # обязательный ли аргумент
 
-    def __init__(self, name, index, default=None):
+    def __init__(self, name, index):
         self._name = name  # название
         self._index = index  # порядковый номер в списке аргументов
-        self._default = default  # значение по умолчанию
 
     @property
     def name(self):
@@ -18,14 +17,14 @@ class NonMandatoryArg:
         """
         Обязательный ли аргумент.
         """
-        return self.__class__.is_mandatory
+        return self.__class__.mandatory
 
 
 class MandatoryArg(NonMandatoryArg):
     """
     Обязательный аргумент.
     """
-    is_mandatory = True
+    mandatory = True
 
 
 class Func:
@@ -46,6 +45,10 @@ class Func:
         for arg in self.__class__.args_description:
             if arg.is_mandatory:
                 self._mandatory += 1
+
+    @property
+    def name(self):
+        return self.__class__.__name__.lower()
 
     @property
     def description(self):
@@ -92,7 +95,7 @@ class Func:
                     args.append(arg)
             result = operation(*args)
         except Exception as e:
-            print(e)
+            #print(e)
             return '#ERROR'
         else:
             return result
@@ -133,4 +136,15 @@ class TypeconvFunc(Func):
     group = 'typeconv'
 
 
-f = 'sum(1, 2) + div(11, 2)'
+class DataframeFunc(Func):
+    """
+    Функция для работы с датафреймами.
+    """
+    group = 'df'
+
+
+class DatastructFunc(Func):
+    """
+    Функция для работы со структурами данных.
+    """
+    group = 'datastruct'

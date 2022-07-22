@@ -78,7 +78,13 @@ class Panda:
         """
         Изменение типа данных в столбце.
         """
-        pass
+        t = str
+        if to_type == 'int':
+            t = int
+        elif to_type == 'float':
+            t = float
+        self.df[col_name] = self.df[col_name].astype(t) 
+        return self
 
     def filter(self, panda_filter):
         """
@@ -95,12 +101,6 @@ class Panda:
         if asc not in [True, False]:
             asc = True
         self._df = self.df.sort_values(by=by, ascending=asc)
-        return self
-
-    def apply_func(self, col, func, **kwargs):
-        """
-        Применение функции к датафрейму.
-        """
         return self
 
     def _parse_filter(self, jsf):

@@ -164,6 +164,7 @@ class PandaIn(PandaFilter):
         return self._df[self._panda_col].isin(self._value)
 
 
+# пример описания фильтра для датафрейма в json
 jsfilter = [
     {
         'col_name': 'film.film_id',
