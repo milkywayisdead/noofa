@@ -55,13 +55,14 @@ class GetRow(DataframeFunc):
         return df.iloc[index]
 
 
-class Calculator:
+class Interpreter:
     """
     Инструмент для выполнения функций и вычислений. 
     """
 
-    def __init__(self, **kwargs):
-        self._dataframes = kwargs.get('dataframes', {})
+    def __init__(self, **context):
+        self._dataframes = context.get('dataframes', {})
+        self._variables = context.get('variables', {})
 
     def get_df(self, df_name):
         getdf = GetDf(df_name)
