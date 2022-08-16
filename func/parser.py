@@ -4,7 +4,56 @@
 
 import re
 from abc import ABC, abstractmethod
-from struct import unpack
+
+
+class FormulaSyntaxError(Exception):
+    def __str__(self):
+        return 'Ошибка синтаксиса'
+
+from . import FUNCTIONS_DICT as _functions_dict
+def exe(stree):
+    """
+    Вычисление формулы/интерпретация выражения с возвращением результата.
+    """
+    type_ = stree['type']
+    if type_ == 'symbol':
+        raise FormulaSyntaxError
+    if type_ == 'string':
+        return str(stree['value'])
+    if type_ == 'number':
+        return float(stree['value'])
+    if type_ == 'operator':
+        left, right = exe(stree['left']), exe(stree['right'])
+        func = None
+        value = stree['value']
+        if value == '+':
+            func = 'sum'
+        elif value == '-':
+            func = 'subtract'
+        elif value == '*':
+            func = 'mult'
+        elif value == '/':
+            func = 'div'
+        func = _get_function(func)
+        return func(left, right)()
+    if type_ == 'call':
+        args = []
+        for arg in stree['args']:
+            r = exe(arg)
+            args.append(r)
+        if stree['function'] is None:
+            func = None
+        else:
+            func = _get_function(stree['function']['value'])
+        if func is None and not args:
+            raise FormulaSyntaxError
+        return func(*args)()
+
+def _get_function(name):
+    """
+    Получение функции по имени.
+    """
+    return _functions_dict.get(name, None)
 
 
 def parse(formula_string):
@@ -12,7 +61,9 @@ def parse(formula_string):
     tokens = [tok for tok in lexer.lex()]
     token_stream = Stream(tokens)
     parser = Parser(token_stream)
-    return [tok for tok in parser.parse()]
+    stree = [tok for tok in parser.parse()]
+    stree = unpack_operators(stree[0])
+    return stree
 
 
 class Parser:
@@ -123,7 +174,7 @@ class FormulaLexer:
             for rule in self._rules:
                 if rule.match(token):
                     yield {'type': rule.type, 'value': rule.scan(stream, token)}
-                continue
+                    break
 
 
 class Rule(ABC):
@@ -255,6 +306,61 @@ class ErrorRule(Rule):
         pass
 
 
+def unpack_operators(expr):
+    """
+    Распаковка операторов в синтаксическом дереве.
+    """
+    type_ = expr['type']
+    if type_ == 'operator': 
+        _unpacked = _unpack_operator(expr)
+        same_priority = _same_priority(_unpacked)
+        if not same_priority:
+            expr = sort_operators(_unpacked)
+    elif type_ == 'call':
+        args = []
+        for arg in expr['args']:
+            args.append(unpack_operators(arg))
+        expr['args'] = args
+    return expr
+
+
+_OPERATORS_PRIORITY = {
+    '*': 1,
+    '/': 1,
+    '+': 2,
+    '-': 2,
+}
+
+_OPERATORS = _OPERATORS_PRIORITY.keys()
+
+
+def sort_operators(unpacked_operator):
+    """
+    Сортировка операторов по приоритету операций.
+    """
+    def upd(unp, n, operator):
+        left, right = unp[n-1], unp[n+1]
+        op = {'type': 'operator', 'value': operator, 'left': left, 'right': right}
+        l, r = unp[:n-1], unp[n+2:]
+        l.append(op)
+        return op, l + r       
+
+    res = []
+    while len(unpacked_operator) != 1:
+        for n, i in enumerate(unpacked_operator):
+            type_ = type(i)
+            if type_ is str:
+                priority = _OPERATORS_PRIORITY[i]
+                if priority == 1:
+                    res, unpacked_operator = upd(unpacked_operator, n, i)
+                    break
+                else:
+                    keep_looking = ('*' in unpacked_operator) | ('/' in unpacked_operator)
+                    if not keep_looking:
+                        res, unpacked_operator = upd(unpacked_operator, n, i)
+                        break
+    return res
+
 def _unpack_operator(op):
     """
     Распаковка аргументов оператора.
@@ -280,33 +386,6 @@ def _unpack_operator(op):
     return res
 
 
-def unpack_operators(expr):
-    """
-    Распаковка операторов в синтаксическом дереве.
-    """
-    type_ = expr['type']
-    if type_ == 'operator': 
-        _unpacked = _unpack_operator(expr)
-        same_priority = _same_priority(_unpacked)
-        if not same_priority:
-            expr = sort_operators(_unpacked)
-    elif type_ == 'call':
-        args = []
-        for arg in expr['args']:
-            args.append(unpack_operators(arg))
-        expr['args'] = args
-    return expr
-
-_OPERATORS_PRIORITY = {
-    '*': 1,
-    '/': 1,
-    '+': 2,
-    '-': 2,
-}
-
-_OPERATORS = _OPERATORS_PRIORITY.keys()
-
-
 def _same_priority(unpacked_operator):
     """
     Проверка распакованного оператора на наличие
@@ -325,31 +404,3 @@ def _same_priority(unpacked_operator):
         operators = set(operators)
         same_priority = len(operators) == 1
     return same_priority
-
-def sort_operators(unpacked_operator):
-    """
-    Сортировка операторов по приоритету операций.
-    """
-    def upd(unp, n, operator):
-        left, right = unp[n-1], unp[n+1]
-        op = {'type': 'operator', 'value': operator, 'left': left, 'right': right}
-        l, r = unp[:n-1], unp[n+2:]
-        l.append(op)
-        return op, l + r       
-
-    res = []
-    while len(unpacked_operator) != 1:
-        print(unpacked_operator)
-        for n, i in enumerate(unpacked_operator):
-            type_ = type(i)
-            if type_ is str:
-                priority = _OPERATORS_PRIORITY[i]
-                if priority == 1:
-                    res, unpacked_operator = upd(unpacked_operator, n, i)
-                    break
-                else:
-                    keep_looking = ('*' in unpacked_operator) | ('/' in unpacked_operator)
-                    if not keep_looking:
-                        res, unpacked_operator = upd(unpacked_operator, n, i)
-                        break
-    return res

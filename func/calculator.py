@@ -2,6 +2,36 @@ from reports.dataset.base import Panda
 from .base import DataframeFunc, NonMandatoryArg, MandatoryArg
 
 
+class Interpreter:
+    """
+    Инструмент для выполнения функций и вычислений. 
+    """
+
+    def __init__(self, **context):
+        self._dataframes = context.get('dataframes', {})
+        self._variables = context.get('variables', {})
+
+    def get_df(self, df_name):
+        getdf = GetDf(df_name)
+        getdf.context = self._dataframes
+        return getdf()
+
+    def get_col(self, df, col_name):
+        return GetCol(df, col_name)()
+
+    def get_row(self, df, index):
+        return GetRow(df, index)()
+
+    def df_merge(self):
+        pass
+
+    def df_union(self, df1, df2):
+        pass
+
+    def df_query(self, df, q):
+        pass
+
+
 class GetDf(DataframeFunc):
     """
     Функция получения датафрейма.
@@ -53,33 +83,3 @@ class GetRow(DataframeFunc):
 
     def _operation(self, df, index):
         return df.iloc[index]
-
-
-class Interpreter:
-    """
-    Инструмент для выполнения функций и вычислений. 
-    """
-
-    def __init__(self, **context):
-        self._dataframes = context.get('dataframes', {})
-        self._variables = context.get('variables', {})
-
-    def get_df(self, df_name):
-        getdf = GetDf(df_name)
-        getdf.context = self._dataframes
-        return getdf()
-
-    def get_col(self, df, col_name):
-        return GetCol(df, col_name)()
-
-    def get_row(self, df, index):
-        return GetRow(df, index)()
-
-    def df_merge(self):
-        pass
-
-    def df_union(self, df1, df2):
-        pass
-
-    def df_query(self, df, q):
-        pass
