@@ -6,56 +6,6 @@ import re
 from abc import ABC, abstractmethod
 
 
-class FormulaSyntaxError(Exception):
-    def __str__(self):
-        return 'Ошибка синтаксиса'
-
-from . import FUNCTIONS_DICT as _functions_dict
-def exe(stree):
-    """
-    Вычисление формулы/интерпретация выражения с возвращением результата.
-    """
-    type_ = stree['type']
-    if type_ == 'symbol':
-        raise FormulaSyntaxError
-    if type_ == 'string':
-        return str(stree['value'])
-    if type_ == 'number':
-        return float(stree['value'])
-    if type_ == 'operator':
-        left, right = exe(stree['left']), exe(stree['right'])
-        func = None
-        value = stree['value']
-        if value == '+':
-            func = 'sum'
-        elif value == '-':
-            func = 'subtract'
-        elif value == '*':
-            func = 'mult'
-        elif value == '/':
-            func = 'div'
-        func = _get_function(func)
-        return func(left, right)()
-    if type_ == 'call':
-        args = []
-        for arg in stree['args']:
-            r = exe(arg)
-            args.append(r)
-        if stree['function'] is None:
-            func = None
-        else:
-            func = _get_function(stree['function']['value'])
-        if func is None and not args:
-            raise FormulaSyntaxError
-        return func(*args)()
-
-def _get_function(name):
-    """
-    Получение функции по имени.
-    """
-    return _functions_dict.get(name, None)
-
-
 def parse(formula_string):
     lexer = FormulaLexer(formula_string)
     tokens = [tok for tok in lexer.lex()]

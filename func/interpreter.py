@@ -1,5 +1,7 @@
 from reports.dataset.base import Panda
 from .base import DataframeFunc, NonMandatoryArg, MandatoryArg
+from ._functions import FUNCTIONS_DICT as _functions_dict
+from .errors import FormulaSyntaxError
 
 
 class Interpreter:
@@ -10,6 +12,51 @@ class Interpreter:
     def __init__(self, **context):
         self._dataframes = context.get('dataframes', {})
         self._variables = context.get('variables', {})
+        self._functions_dict = {**_functions_dict}
+
+    def eval(self, stree):
+        """
+        Интерпретация синтаксического дерева с возвращением результата.
+        """
+        type_ = stree['type']
+        if type_ == 'symbol':
+            raise FormulaSyntaxError
+        if type_ == 'string':
+            return str(stree['value'])
+        if type_ == 'number':
+            return float(stree['value'])
+        if type_ == 'operator':
+            left, right = self.eval(stree['left']), self.eval(stree['right'])
+            func = None
+            value = stree['value']
+            if value == '+':
+                func = 'sum'
+            elif value == '-':
+                func = 'subtract'
+            elif value == '*':
+                func = 'mult'
+            elif value == '/':
+                func = 'div'
+            func = self._get_function(func)
+            return func(left, right)()
+        if type_ == 'call':
+            args = []
+            for arg in stree['args']:
+                r = self.eval(arg)
+                args.append(r)
+            if stree['function'] is None:
+                func = None
+            else:
+                func = self._get_function(stree['function']['value'])
+            if func is None and not args:
+                raise FormulaSyntaxError
+            return func(*args)()
+
+    def _get_function(self, name):
+        """
+        Получение функции по имени.
+        """
+        return self._functions_dict.get(name, None)
 
     def get_df(self, df_name):
         getdf = GetDf(df_name)
