@@ -148,3 +148,15 @@ class DatastructFunc(Func):
     Функция для работы со структурами данных.
     """
     group = 'datastruct'
+
+
+class Operator(Func):
+    """
+    Функции-операторы.
+    """
+    group = 'operators'
+    sign = None
+
+    @property
+    def sign(self):
+        return self.__class__.sign
