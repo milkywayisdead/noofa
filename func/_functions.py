@@ -60,3 +60,15 @@ def _collect_operators():
 
 _collect_functions()
 _collect_operators()
+
+
+def collect_description():
+    res = {}
+    for fname, f in FUNCTIONS_DICT.items():
+        fgroup = f.group
+        if not fgroup in res:
+            res[fgroup] = {}
+        desc = f.description
+        if desc != '__':
+            res[fgroup][fname] = f.description
+    return res

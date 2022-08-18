@@ -3,7 +3,7 @@ from .base import DataframeFunc, NonMandatoryArg, MandatoryArg
 from .parser import parse
 from ._functions import FUNCTIONS_DICT as _functions_dict
 from ._functions import OPERATORS_DICT as _operators_dict
-from .errors import FormulaSyntaxError
+from .errors import ExpressionSyntaxError
 
 
 _OPERATORS_PRIORITY = {
@@ -11,6 +11,8 @@ _OPERATORS_PRIORITY = {
     '/': 1,
     '+': 2,
     '-': 2,
+    '>': 3,
+    '<': 3,
 }
 
 _OPERATORS = _OPERATORS_PRIORITY.keys()
@@ -18,9 +20,8 @@ _OPERATORS = _OPERATORS_PRIORITY.keys()
 
 class Interpreter:
     """
-    Инструмент для выполнения функций и вычислений. 
+    Интерпретатор для выполнения функций и вычислений. 
     """
-
     def __init__(self, **context):
         self._dataframes = context.get('dataframes', {})
         self._variables = context.get('variables', {})
@@ -33,7 +34,7 @@ class Interpreter:
         """
         if not expression.endswith(';'):
             expression += ';'
-        stree = parse(expression)
+        stree = parse(expression);print(stree)
         stree = self._normalize_operators(stree[0])
         return self._eval(stree)
 
@@ -41,28 +42,40 @@ class Interpreter:
         """
         Интерпретация синтаксического дерева с возвращением результата.
         """
+        if stree is None:
+            return None
         type_ = stree['type']
         if type_ == 'symbol':
-            raise FormulaSyntaxError
+            raise ExpressionSyntaxError
         if type_ == 'string':
-            return str(stree['value'])
+            func = self._get_function('to_str')
+            return func(stree['value'])()
         if type_ == 'number':
-            return float(stree['value'])
+            value = stree['value']
+            if '.' in value:
+                _func = 'to_float'
+            else:
+                _func = 'to_int'
+            func = self._get_function(_func)
+            return func(value)()
         if type_ == 'operator':
+            sign = stree['value']
             left, right = self._eval(stree['left']), self._eval(stree['right'])
-            func = self._get_operator(stree['value'])
+            func = self._get_operator(sign)
             return func(left, right)()
         if type_ == 'call':
             args = []
             for arg in stree['args']:
                 r = self._eval(arg)
                 args.append(r)
-            if stree['function'] is None:
-                func = None
+            _func = stree['function']
+            if _func is None:
+                args_len = len(args)
+                if args_len == 0 or args_len > 1:
+                    raise ExpressionSyntaxError
+                return args[0]
             else:
-                func = self._get_function(stree['function']['value'])
-            if func is None and not args:
-                raise FormulaSyntaxError
+                func = self._get_function(_func['value'])              
             return func(*args)()
 
     def _get_function(self, name):
@@ -76,17 +89,12 @@ class Interpreter:
         
     def _normalize_operators(self, expr):
         """
-        Упорядочивание операторов синтаксическом дереве по приоритету операций.
+        Упорядочивание операторов в выражении по приоритету операций.
         """
         type_ = expr['type']
         if type_ == 'operator': 
             _unpacked = self._unpack_operator(expr)
-            same_priority = self._same_priority(_unpacked)
-            # если в распакованном выражении нет операторов с разными
-            # приоритетами, то они будут выполняться в порядке появления;
-            # в противном случае выполняется их упорядочивание по приоритету
-            if not same_priority:
-                expr = self._sort_operators(_unpacked)
+            expr = self._sort_operators(_unpacked)
         elif type_ == 'call':
             args = []
             for arg in expr['args']:
@@ -103,9 +111,14 @@ class Interpreter:
             op = {'type': 'operator', 'value': operator, 'left': left, 'right': right}
             l, r = unp[:n-1], unp[n+2:]
             l.append(op)
-            return op, l + r       
+            return op, l + r
+
+        def get_prioritized(priority):
+            return [s for s, p in _OPERATORS_PRIORITY.items() if p == priority]
 
         res = []
+        current_priority = 1
+        prioritized_operators = get_prioritized(current_priority)
         # перебор распакованного оператора производится до тех пор,
         # пока он не будет приведён к одному словарю
         while len(unpacked_operator) != 1:
@@ -113,18 +126,19 @@ class Interpreter:
                 type_ = type(i)
                 if type_ is str:
                     priority = _OPERATORS_PRIORITY[i]
-                    if priority == 1:
-                        # первыми в результат добавляются операторы с приоритетом 1 (*, /)
+                    if priority == current_priority:
                         res, unpacked_operator = upd(unpacked_operator, n, i)
                         break
                     else:
-                        # для операторов с приоритетом 2 сначала проверяется,
-                        # есть ли в распакованном операторе операторы с приоритетом 1 (*, /)
-                        keep_looking = ('*' in unpacked_operator) | ('/' in unpacked_operator)
+                        keep_looking = False
+                        for p in prioritized_operators:
+                            if p in unpacked_operator:
+                                keep_looking = True
+                                break
                         if not keep_looking:
-                            # если остались только операторы с приоритетом 2, то они последовательно
-                            # включаются в результат
-                            res, unpacked_operator = upd(unpacked_operator, n, i)
+                            #res, unpacked_operator = upd(unpacked_operator, n, i)
+                            current_priority += 1
+                            prioritized_operators = get_prioritized(current_priority)
                             break
         return res
 
@@ -139,7 +153,11 @@ class Interpreter:
         res = [op['value']]
         for i in ('left', 'right'):
             o = op[i]
-            if o is None and i == 'left':
+            if o is None:
+                if i == 'left':
+                    res.insert(0, o)
+                else:
+                    res.append(o)                
                 continue
             if o['type'] == 'operator':
                 unp = self._unpack_operator(o)
@@ -157,6 +175,7 @@ class Interpreter:
         return res
 
     def _same_priority(self, unpacked_operator):
+        # удалить в дальнейшем
         """
         Проверка распакованного оператора на наличие
         операций с различными приоритетами.

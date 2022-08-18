@@ -1,7 +1,7 @@
 """
 Операторы.
 """
-from .base import Operator, NonMandatoryArg, MandatoryArg
+from .base import Operator, MandatoryArg
 
 
 class Add(Operator):
@@ -16,7 +16,10 @@ class Add(Operator):
     ]
 
     def _operation(self, *args):
-        return args[0] + args[1]
+        left, right = args
+        if left is None and type(right) is not str:
+            return right
+        return left + right
 
 
 class Subtract(Operator):
@@ -31,7 +34,10 @@ class Subtract(Operator):
     ]
 
     def _operation(self, *args):
-        return args[0] - args[1]
+        left, right = args
+        if left is None and type(right) is not str:
+            left = 0
+        return left - right
 
 
 class Divide(Operator):
@@ -77,3 +83,33 @@ class Assign(Operator):
 
     def _operation(self, *args):
         return {args[0]: args[1]}
+
+
+class IsGt(Operator):
+    """
+    Сравнение >.
+    """
+    sign = '>'
+    description = 'Сравнение > двух значений'
+    args_description = [
+        MandatoryArg('Значение1', 0),
+        MandatoryArg('Значение2', 1),
+    ]
+
+    def _operation(self, *args):
+        return args[0] > args[1]
+
+
+class IsGt(Operator):
+    """
+    Сравнение <.
+    """
+    sign = '<'
+    description = 'Сравнение < двух значений'
+    args_description = [
+        MandatoryArg('Значение1', 0),
+        MandatoryArg('Значение2', 1),
+    ]
+
+    def _operation(self, *args):
+        return args[0] < args[1]

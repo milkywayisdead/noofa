@@ -227,7 +227,7 @@ class OperatorRule(Rule):
     Правило для операторов.
     """
     def match(self, token):
-        if token in ['+', '-', '*', '/']:
+        if token in ['+', '-', '*', '/', '>', '<']:
             return True
 
     def scan(self, token_stream, token):

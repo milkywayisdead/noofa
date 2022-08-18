@@ -2,7 +2,7 @@
 Функции работы со строками.
 """
 
-from .base import StrFunc
+from .base import StrFunc, MandatoryArg, NonMandatoryArg
 
 
 def _endswith(string, sub):
@@ -33,8 +33,8 @@ class Contains(StrFunc):
     """
     description = 'Проверка, содержит ли строка другую строку'
     args_description = [
-        {'name': 'Строка1', 'index': 0, 'is_mandatory': True},
-        {'name': 'Строка2', 'index': 1, 'is_mandatory': True},
+        MandatoryArg('Строка1', 0),
+        MandatoryArg('Строка2', 1),
     ]
 
     def _operation(self, *args):
@@ -47,8 +47,8 @@ class Endswith(StrFunc):
     """
     description = 'Проверка, заканчивается ли строка другой строкой'
     args_description = [
-        {'name': 'Строка1', 'index': 0, 'is_mandatory': True},
-        {'name': 'Строка2', 'index': 1, 'is_mandatory': True},
+        MandatoryArg('Строка1', 0),
+        MandatoryArg('Строка2', 1),
     ]
 
     def _operation(self, *args):
@@ -62,7 +62,7 @@ class Len(StrFunc):
     description = 'Получение длины строки'
     operation = len
     args_description = [
-        {'name': 'Строка', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Строка', 0),
     ]
 
 
@@ -72,7 +72,7 @@ class Lower(StrFunc):
     """
     description = 'Перевод строки в нижний регистр'
     args_description = [
-        {'name': 'Строка', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Строка', 0),
     ]
 
     def _operation(self, *args):
@@ -85,7 +85,7 @@ class Upper(StrFunc):
     """
     description = 'Перевод строки в верхний регистр'
     args_description = [
-        {'name': 'Строка', 'index': 0, 'is_mandatory': True},
+        MandatoryArg('Строка', 0),
     ]
 
     def _operation(self, *args):
@@ -96,10 +96,10 @@ class Concat(StrFunc):
     """
     Сложение строк.
     """
-    description = 'Сложение нескольких строк'
+    description = 'Сложение строк'
     args_description = [
-        {'name': 'Строка1', 'index': 0, 'is_mandatory': True},
-        {'name': 'Строка2', 'index': 1, 'is_mandatory': True},
+        MandatoryArg('Строка1', 0),
+        MandatoryArg('Строка2', 1),
     ]
 
     def _operation(self, *args):
@@ -115,9 +115,9 @@ class Join(StrFunc):
     """
     description = 'Объединение строк через разделитель'
     args_description = [
-        {'name': 'Разделитель', 'index': 0, 'is_mandatory': True},
-        {'name': 'Строка1', 'index': 1, 'is_mandatory': True},
-        {'name': 'Строка2', 'index': 2, 'is_mandatory': True},
+        MandatoryArg('Разделитель', 0),
+        MandatoryArg('Строка1', 1),
+        MandatoryArg('Строка2', 2),
     ]
 
     def _operation(self, *args):
@@ -132,8 +132,8 @@ class Startswith(StrFunc):
     """
     description = 'Проверка, начинается ли строка другой строкой'
     args_description = [
-        {'name': 'Строка1', 'index': 0, 'is_mandatory': True},
-        {'name': 'Строка2', 'index': 1, 'is_mandatory': True},
+        MandatoryArg('Строка1', 0),
+        MandatoryArg('Строка2', 1),
     ]
 
     def _operation(self, *args):
