@@ -114,15 +114,21 @@ class FormulaLexer:
 
     def lex(self):
         stream = self._stream
+        ready_for_next = True
         while stream.next is not None:
-            token = stream.get_next()
+            if ready_for_next:
+                token = stream.get_next()
+            else:
+                token = stream.next
             if token in ' \n':
-                pass
+                ready_for_next = True
             elif token in '(),;':
+                ready_for_next = True
                 yield {'type': token, 'value': ''}
             for rule in self._rules:
                 if rule.match(token):
-                    yield {'type': rule.type, 'value': rule.scan(stream, token)}
+                    value, ready_for_next = rule.scan(stream, token)
+                    yield {'type': rule.type, 'value': value}
                     break
 
 
@@ -158,7 +164,7 @@ class SymbolRule(Rule):
         while c is not None and re.match(self.scan_re, c):
             res += token_stream.get_next()
             c = token_stream.next
-        return res
+        return res, True
 
     @property
     def scan_re(self):
@@ -186,7 +192,7 @@ class StringRule(Rule):
                 raise Exception('Незавершённый идентификатор строки')
             res += c
         token_stream.get_next()
-        return res
+        return res, True
 
     @property
     def scan_re(self):
@@ -211,7 +217,7 @@ class NumberRule(Rule):
         while c is not None and re.match(self.scan_re, c):
             res += token_stream.get_next()
             c = token_stream.next
-        return res
+        return res, True
 
     @property
     def scan_re(self):
@@ -231,7 +237,13 @@ class OperatorRule(Rule):
             return True
 
     def scan(self, token_stream, token):
-        return token
+        if token in ('>', '<'):
+            c = token_stream.get_next()
+            if c == '=':
+                return token + c, True
+            else:
+                return token, False
+        return token, True
 
     @property
     def scan_re(self):

@@ -13,6 +13,8 @@ _OPERATORS_PRIORITY = {
     '-': 2,
     '>': 3,
     '<': 3,
+    '>=': 3,
+    '<=': 3,
 }
 
 _OPERATORS = _OPERATORS_PRIORITY.keys()
@@ -34,7 +36,7 @@ class Interpreter:
         """
         if not expression.endswith(';'):
             expression += ';'
-        stree = parse(expression);print(stree)
+        stree = parse(expression)
         stree = self._normalize_operators(stree[0])
         return self._eval(stree)
 

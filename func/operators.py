@@ -100,7 +100,22 @@ class IsGt(Operator):
         return args[0] > args[1]
 
 
-class IsGt(Operator):
+class IsGte(Operator):
+    """
+    Сравнение >=.
+    """
+    sign = '>='
+    description = 'Сравнение >= двух значений'
+    args_description = [
+        MandatoryArg('Значение1', 0),
+        MandatoryArg('Значение2', 1),
+    ]
+
+    def _operation(self, *args):
+        return args[0] >= args[1]
+
+
+class IsLt(Operator):
     """
     Сравнение <.
     """
@@ -113,3 +128,18 @@ class IsGt(Operator):
 
     def _operation(self, *args):
         return args[0] < args[1]
+
+
+class IsLte(Operator):
+    """
+    Сравнение <=.
+    """
+    sign = '<='
+    description = 'Сравнение <= двух значений'
+    args_description = [
+        MandatoryArg('Значение1', 0),
+        MandatoryArg('Значение2', 1),
+    ]
+
+    def _operation(self, *args):
+        return args[0] <= args[1]
