@@ -143,3 +143,33 @@ class IsLte(Operator):
 
     def _operation(self, *args):
         return args[0] <= args[1]
+
+
+class IsEq(Operator):
+    """
+    Сравнение ==.
+    """
+    sign = '=='
+    description = 'Сравнение == двух значений'
+    args_description = [
+        MandatoryArg('Значение1', 0),
+        MandatoryArg('Значение2', 1),
+    ]
+
+    def _operation(self, *args):
+        return args[0] == args[1]
+
+
+class IsNeq(Operator):
+    """
+    Сравнение !=.
+    """
+    sign = '!='
+    description = 'Сравнение != двух значений'
+    args_description = [
+        MandatoryArg('Значение1', 0),
+        MandatoryArg('Значение2', 1),
+    ]
+
+    def _operation(self, *args):
+        return args[0] != args[1]

@@ -233,15 +233,17 @@ class OperatorRule(Rule):
     Правило для операторов.
     """
     def match(self, token):
-        if token in ['+', '-', '*', '/', '>', '<']:
+        if token in ['+', '-', '*', '/', '>', '<', '!', '=']:
             return True
 
     def scan(self, token_stream, token):
-        if token in ('>', '<'):
+        if token in ('>', '<', '!', '='):
             c = token_stream.get_next()
             if c == '=':
                 return token + c, True
             else:
+                if token in ('!', '='):
+                    raise Exception(f'Неожиданный токен после "{token}": {c}')
                 return token, False
         return token, True
 

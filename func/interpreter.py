@@ -15,6 +15,8 @@ _OPERATORS_PRIORITY = {
     '<': 3,
     '>=': 3,
     '<=': 3,
+    '!=': 4,
+    '==': 4,
 }
 
 _OPERATORS = _OPERATORS_PRIORITY.keys()
