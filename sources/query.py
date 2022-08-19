@@ -142,7 +142,7 @@ class SelectQuery:
 
         return cursor.fetchall()
 
-    def _str_and_params(self):
+    def str_and_params(self):
         return (str(self), self._params)
 
     def __str__(self):
@@ -446,9 +446,10 @@ class Table:
     Таблица.
     """
 
-    def __init__(self, name, fields):
+    def __init__(self, name, fields, enquote=False):
         self._name = name
         self._fields_names = fields
+        self._enquote = enquote  # брать ли в кавычки названия таблицы и полей
 
         _columns, _fields = [], []
         for field in fields:
@@ -465,7 +466,10 @@ class Table:
         return self._fields_names
 
     def get_verbose_names(self):
-        verbose_names = [f'{self._name}.{field}' for field in self._fields_names]
+        if self._enquote:
+            verbose_names = [f'"{self._name}"."{field}"' for field in self._fields_names]
+        else:    
+            verbose_names = [f'{self._name}.{field}' for field in self._fields_names]
         return verbose_names
 
     def select(self, *fields):

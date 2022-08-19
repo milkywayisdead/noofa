@@ -103,7 +103,7 @@ class PostgresSource(DatabaseSource):
         self.connection.close()
 
     def get_data(self, query, **kwargs):
-        q, params = query._str_and_params()
+        q, params = query.str_and_params()
         fields = query._requested
         data = []
 
@@ -136,6 +136,16 @@ class PostgresSource(DatabaseSource):
             fields = [column[0] for column in res]
 
         return fields
+
+    def get_table(self, table_name):
+        """
+        Построение таблицы.
+
+        table_name - имя таблицы из бд.
+        """
+
+        from .query import Table
+        return Table(table_name, self.get_fields(table_name), enquote=True)
 
 
 class MySqlSource(DatabaseSource):
@@ -183,7 +193,7 @@ class MySqlSource(DatabaseSource):
         self.connection.close()
 
     def get_data(self, query, **kwargs):
-        q, params = query._str_and_params()
+        q, params = query.str_and_params()
         fields = query._requested
         data = []
 
