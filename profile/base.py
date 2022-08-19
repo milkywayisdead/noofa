@@ -1,4 +1,4 @@
-from reports.func import Interpreter
+from noofa.func import Interpreter
 
 
 class ProfileSchema:

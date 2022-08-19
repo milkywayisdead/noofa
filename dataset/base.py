@@ -137,7 +137,7 @@ class Panda:
 
 
 def test():
-    from reports.tests import pg
+    from noofa.tests import pg
     pg.open()
     t1 = pg.get_table('film')
     t2 = pg.get_table('film_actor')

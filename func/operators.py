@@ -4,6 +4,20 @@
 from .base import Operator, MandatoryArg
 
 
+_OPERATORS_PRIORITY = {
+    '*': 1,
+    '/': 1,
+    '+': 2,
+    '-': 2,
+    '>': 3,
+    '<': 3,
+    '>=': 3,
+    '<=': 3,
+    '!=': 4,
+    '==': 4,
+}
+
+
 class Add(Operator):
     """
     Сумма двух чисел.

@@ -1,23 +1,14 @@
-from reports.dataset.base import Panda
-from .base import DataframeFunc, NonMandatoryArg, MandatoryArg
+from .base import (
+    DataframeFunc, 
+    NonMandatoryArg, 
+    MandatoryArg,
+)
 from .parser import parse
 from ._functions import FUNCTIONS_DICT as _functions_dict
 from ._functions import OPERATORS_DICT as _operators_dict
+from .operators import _OPERATORS_PRIORITY
 from .errors import ExpressionSyntaxError
 
-
-_OPERATORS_PRIORITY = {
-    '*': 1,
-    '/': 1,
-    '+': 2,
-    '-': 2,
-    '>': 3,
-    '<': 3,
-    '>=': 3,
-    '<=': 3,
-    '!=': 4,
-    '==': 4,
-}
 
 _OPERATORS = _OPERATORS_PRIORITY.keys()
 
@@ -40,7 +31,43 @@ class Interpreter:
             expression += ';'
         stree = parse(expression)
         stree = self._normalize_operators(stree[0])
-        return self._eval(stree)
+        is_valid = self._check_syntax(stree)
+        if not is_valid:
+            raise ExpressionSyntaxError
+        func = self._eval(stree)
+        return func()
+
+    def _check_syntax(self, stree):
+        if stree is None:
+            return True
+        type_ = stree['type']
+        if type_ == 'symbol':
+            return False
+        if type_ == 'number':
+            if stree['value'].count('.') > 1:
+                return False
+        if type_ == 'operator':
+            sign = stree['value']
+            left, right = stree['left'], stree['right']
+            for o in (left, right):
+                if not self._check_syntax(o):
+                    return False
+            if left is None:
+                if not sign in ('+', '-'):
+                    return False
+            if right is None:
+                return False
+        if type_ == 'call':
+            args = stree['args']
+            for arg in args:
+                if not self._check_syntax(arg):
+                    return False
+            fname = stree['function']
+            args_len = len(args)
+            if fname is None:
+                if not args_len or args_len > 1:
+                    return False
+        return True
 
     def _eval(self, stree):
         """
@@ -49,11 +76,9 @@ class Interpreter:
         if stree is None:
             return None
         type_ = stree['type']
-        if type_ == 'symbol':
-            raise ExpressionSyntaxError
         if type_ == 'string':
             func = self._get_function('to_str')
-            return func(stree['value'])()
+            return func(stree['value'])
         if type_ == 'number':
             value = stree['value']
             if '.' in value:
@@ -61,12 +86,12 @@ class Interpreter:
             else:
                 _func = 'to_int'
             func = self._get_function(_func)
-            return func(value)()
+            return func(value)
         if type_ == 'operator':
             sign = stree['value']
             left, right = self._eval(stree['left']), self._eval(stree['right'])
             func = self._get_operator(sign)
-            return func(left, right)()
+            return func(left, right)
         if type_ == 'call':
             args = []
             for arg in stree['args']:
@@ -74,18 +99,12 @@ class Interpreter:
                 args.append(r)
             _func = stree['function']
             if _func is None:
-                args_len = len(args)
-                if args_len == 0 or args_len > 1:
-                    raise ExpressionSyntaxError
                 return args[0]
             else:
                 func = self._get_function(_func['value'])              
-            return func(*args)()
+            return func(*args)
 
     def _get_function(self, name):
-        """
-        Получение функции по имени.
-        """
         return self._functions_dict.get(name, None)
 
     def _get_operator(self, sign):

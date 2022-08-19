@@ -5,6 +5,8 @@
 import re
 from abc import ABC, abstractmethod
 
+from .errors import ExpressionParsingError
+
 
 def parse(formula_string):
     lexer = FormulaLexer(formula_string)
@@ -53,7 +55,7 @@ class Parser:
             args = self._scan_args(func=prev)
             return self.next_expression({'type': 'call', 'function': prev, 'args': args})
         else:
-            raise Exception(f'Неожиданный токен: {(type_, value)}')
+            raise ExpressionParsingError(f'Неожиданный токен: {(type_, value)}')
 
     def _scan_args(self, sep=',', end=')', func=None):
         args = []
@@ -189,7 +191,7 @@ class StringRule(Rule):
         while token_stream.next != delimiter:
             c = token_stream.get_next()
             if c is None:
-                raise Exception('Незавершённый идентификатор строки')
+                raise ExpressionParsingError('Незавершённый идентификатор строки')
             res += c
         token_stream.get_next()
         return res, True
@@ -243,7 +245,7 @@ class OperatorRule(Rule):
                 return token + c, True
             else:
                 if token in ('!', '='):
-                    raise Exception(f'Неожиданный токен после "{token}": {c}')
+                    raise ExpressionParsingError(f'Неожиданный токен после "{token}": {c}')
                 return token, False
         return token, True
 
@@ -259,7 +261,7 @@ class OperatorRule(Rule):
 class ErrorRule(Rule):
     def match(self, token):
         if not re.match('[ \n0-9a-zA-Z_();.,+-/*]', token):
-            raise Exception(f'Неизвестный токен: {token}')
+            raise ExpressionParsingError(f'Неизвестный токен: {token}')
 
     def scan(self, token_stream, token):
         pass

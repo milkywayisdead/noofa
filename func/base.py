@@ -1,29 +1,4 @@
-class Result:
-    """
-    Результат вычисления формулы.
-    """
-    is_bad = False
-
-    def __init__(self, value):
-        self._value = value
-
-    @property
-    def value(self):
-        return self._value
-
-    @property
-    def is_bad(self):
-        return self.__class__.is_bad
-
-
-class ErrorResult(Result):
-    """
-    Результат выполнения с ошибкой.
-    """
-    is_bad = True
-
-    def __init__(self, value=None):
-        super().__init__('#ERROR')
+from .errors import NotEnoughArguments
 
 
 class Func:
@@ -80,31 +55,15 @@ class Func:
     def __call__(self):
         operation = self._get_operation()
         args_len = len(self._args)
-        # если аргументов недостаточно, то возвращается результат с ошибкой
         if args_len < self._mandatory:
-            return ErrorResult()
-        try:
-            args = []
-            for arg in self._args:
-                # если аргумент - результат с ошибкой,
-                # то возвращается этот же результат
-                if isinstance(arg, ErrorResult):
-                    return arg
-                # если аргумент является функцией,
-                # то сначала нужно получить её результат
-                if issubclass(type(arg), Func):
-                    args.append(arg())
-                else:
-                    # если аргумент - экз. результата,
-                    # то сначала нужно получить значение результата
-                    if isinstance(arg, Result):
-                        arg = arg.value
-                    args.append(arg)
-            result = operation(*args)
-        except Exception as e:
-            return ErrorResult()
-        else:
-            return Result(result)
+            raise NotEnoughArguments(self.name, self._mandatory)
+        args = []
+        for arg in self._args:
+            if issubclass(type(arg), Func):
+                args.append(arg())
+            else:
+                args.append(arg)
+        return operation(*args)
 
 
 class MathFunc(Func):
@@ -195,3 +154,31 @@ class MandatoryArg(NonMandatoryArg):
     Обязательный аргумент.
     """
     mandatory = True
+
+
+class Result:
+    """
+    Результат вычисления формулы.
+    """
+    is_bad = False
+
+    def __init__(self, value):
+        self._value = value
+
+    @property
+    def value(self):
+        return self._value
+
+    @property
+    def is_bad(self):
+        return self.__class__.is_bad
+
+
+class ErrorResult(Result):
+    """
+    Результат выполнения с ошибкой.
+    """
+    is_bad = True
+
+    def __init__(self, value=None):
+        super().__init__('#ERROR')
