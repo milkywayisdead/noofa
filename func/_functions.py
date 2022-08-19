@@ -36,8 +36,8 @@ def _collect_functions():
             except TypeError:
                 pass
             else:
-                if is_func:
-                    name = p.__name__.lower()
+                if is_func and p.get_description() != '__':
+                    name = p.get_name()
                     FUNCTIONS_DICT[name] = p
 
 
@@ -65,10 +65,8 @@ _collect_operators()
 def collect_description():
     res = {}
     for fname, f in FUNCTIONS_DICT.items():
-        fgroup = f.group
+        fgroup = f.get_group()
         if not fgroup in res:
             res[fgroup] = {}
-        desc = f.description
-        if desc != '__':
-            res[fgroup][fname] = f.description
+        res[fgroup][fname] = f.get_description()
     return res

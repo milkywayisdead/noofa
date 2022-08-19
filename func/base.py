@@ -17,23 +17,23 @@ class Func:
             if arg.is_mandatory:
                 self._mandatory += 1
 
-    @property
-    def name(self):
-        return self.__class__.__name__.lower()
+    @classmethod
+    def get_name(cls):
+        return cls.__name__.lower()
 
-    @property
-    def fdescription(self):
+    @classmethod
+    def get_description(cls):
         """
         Описание функции.
         """
-        return self.__class__.description
+        return cls.description
 
-    @property
-    def fgroup(self):
+    @classmethod
+    def get_group(cls):
         """
         Группа, к которой относится функция.
         """
-        return self.__class__.group
+        return cls.group
 
     def _operation(self, *args):
         """
@@ -56,7 +56,7 @@ class Func:
         operation = self._get_operation()
         args_len = len(self._args)
         if args_len < self._mandatory:
-            raise NotEnoughArguments(self.name, self._mandatory)
+            raise NotEnoughArguments(self.get_name(), self._mandatory)
         args = []
         for arg in self._args:
             if issubclass(type(arg), Func):
