@@ -1,4 +1,4 @@
-from noofa.exceptions import NoSuchFieldError
+from .exceptions import NoSuchFieldError
 
 
 class Join:
@@ -108,7 +108,7 @@ class SelectQuery:
                 if f not in self._values:
                     self._values.append(f)
             else:
-                raise NoSuchFieldError(f'Поле {f} недоступно в запросе')
+                raise NoSuchFieldError(f)
 
     def limit(self, n):
         try:
@@ -128,7 +128,7 @@ class SelectQuery:
                 if ordby not in self._order_by:
                     self._order_by.append(ordby)
             else:
-                raise NoSuchFieldError(f'Поле {field} недоступно в запросе')
+                raise NoSuchFieldError(field)
         return self
 
     def _execute(self, cursor):
