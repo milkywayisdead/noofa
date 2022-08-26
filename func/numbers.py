@@ -50,16 +50,16 @@ class Atan(MathFunc):
     ]
 
 
-class Atan2(MathFunc):
-    """
+""" class Atan2(MathFunc):
+    '''
     Арктангенс частного двух чисел.
-    """
+    '''
     description = 'Получение арктангенса x/y'
     operation = math.atan2
     args_description = [
         MandatoryArg('x', 0),
         MandatoryArg('y', 1),
-    ]
+    ] """
 
 
 class Ceil(MathFunc):
@@ -141,7 +141,7 @@ class Idiv(MathFunc):
 
     def _operation(self, *args):
         try:
-            return arg[0]//arg[1]
+            return args[0]//args[1]
         except ZeroDivisionError:
             return math.inf
 
@@ -174,23 +174,27 @@ class Ln(MathFunc):
     Натуральный логарифм числа.
     """
     description = 'Натуральный логарифм числа'
-    operation = math.log
     args_description = [
         MandatoryArg('Число', 0),
     ]
+
+    def _operation(self, *args):
+        return math.log(args[0])
 
 
 class Log(MathFunc):
     """
     Вычисление логарифма x по основанию y.
     """
-    operation = math.log
     description = 'Вычисление логарифма числа по основанию'
     operation = math.log
     args_description = [
         MandatoryArg('Число', 0),
         MandatoryArg('Основание', 1),
     ]
+
+    def _operation(self, *args):
+        return math.log(args[0], args[1])
 
 
 class Min(MathFunc):
