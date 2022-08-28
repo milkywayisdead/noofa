@@ -102,9 +102,10 @@ class PostgresSource(DatabaseSource):
     def close(self):
         self.connection.close()
 
-    def get_data(self, query, **kwargs):
+    def get_data(self, **kwargs):
+        query = kwargs['query']
         q, params = query.str_and_params()
-        fields = query._requested
+        fields = query.requested
         data = []
 
         with self.connection.cursor() as cursor:
@@ -193,8 +194,9 @@ class MySqlSource(DatabaseSource):
         self.connection.close()
 
     def get_data(self, query, **kwargs):
+        query = kwargs['query']
         q, params = query.str_and_params()
-        fields = query._requested
+        fields = query.requested
         data = []
 
         with self.connection.cursor() as cursor:

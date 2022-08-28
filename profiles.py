@@ -6,8 +6,22 @@ from .core import Panda, _SOURCES_DICT
 
 class ReportSchema:
     def __init__(self, **kwargs):
-        sources = kwargs.get('sources', SourcesSet())
-        dataframes = kwargs.get('dataframes', DataframesSet())
+        _sources = kwargs.get('sources', SourcesSet())
+        _dataframes = kwargs.get('dataframes', DataframesSet())
+
+    def add_source(self, source):
+        self._sources.add(source)
+
+    def add_dataframe(self, df):
+        self._dataframes.add(df)
+
+    @property
+    def sources(self):
+        return self._sources
+
+    @property
+    def dataframes(self):
+        return self._dataframes
 
     @staticmethod
     def from_json(json_schema={}):
@@ -18,7 +32,7 @@ class ReportSchema:
         dataframes_set = DataframesSet()
 
         for n, s in sources.items():
-            source = Source.from_json()
+            source = Source(s)
             sources_set.add(source)
 
         schema.sources = sources_set
@@ -36,10 +50,7 @@ class SourcesSet:
         self._sources[source.name] = source
 
     def __getitem__(self, value):
-        try:
-            return self._sources[value]
-        except KeyError:
-            return
+        return self._sources[value]
 
 
 class DataframesSet:
@@ -50,10 +61,7 @@ class DataframesSet:
         self._dataframes[df.name] = df
 
     def __getitem__(self, value):
-        try:
-            return self._dataframes[value]
-        except KeyError:
-            return
+        return self._dataframes[value]
 
 
 class Source:
@@ -65,6 +73,10 @@ class Source:
         self._connection = None  # соединение (экз. класса *Source из sources.conn)
         self._tables = kwargs.get('tables', {})  #  таблицы
         self._queries = {}  # запросы
+        type_ = kwargs.pop('type')
+        kwargs.pop('name')
+        source_cls = _SOURCES_DICT[type_]
+        self._connection = source = source_cls(**kwargs)
 
     def open(self):
         if self._connection.connection is not None:
@@ -72,13 +84,6 @@ class Source:
 
     def close(self):
         self._connection.close()
-
-    @staticmethod
-    def from_json(self, json_):
-        type_ = json_.pop('type')
-        source_cls = _SOURCES_DICT[type_]
-        source = source_cls(**json_)
-        return source
 
 
 class Query:
@@ -94,7 +99,7 @@ class Query:
         """
         Выполнение запроса.
         """
-        data = self._source.get_data(self._query)
+        data = self._source.get_data(query=self._query)
         return data
 
 

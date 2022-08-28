@@ -55,7 +55,7 @@ class SelectQuery:
         self.values(*fields)
 
     @property
-    def _requested(self):
+    def requested(self):
         if self._values:
             return self._values
         return self._fields
