@@ -6,8 +6,16 @@ from .core import Panda, _SOURCES_DICT
 
 class ReportSchema:
     def __init__(self, **kwargs):
-        _sources = kwargs.get('sources', SourcesSet())
-        _dataframes = kwargs.get('dataframes', DataframesSet())
+        _sources = kwargs.get('sources', {})
+        _dataframes = kwargs.get('dataframes', {})
+        _queries = kwargs.get('queries', {})
+
+        self._sources = SourcesSet()
+        self._dataframes = DataframesSet()
+        for k, source_params in _sources.items():
+            self.add_source(Source(**source_params))
+        for k, df_params in _dataframes.items():
+            self.add_dataframe(Dataframe(**df_params))
 
     def add_source(self, source):
         self._sources.add(source)
@@ -79,7 +87,7 @@ class Source:
         self._connection = source = source_cls(**kwargs)
 
     def open(self):
-        if self._connection.connection is not None:
+        if self._connection.connection is None:
             self._connection.open()
 
     def close(self):
@@ -117,3 +125,27 @@ class Dataframe:
     @property
     def from_query(self):
         return self._query
+
+
+test_conf = {
+    'sources': {
+        'test': {
+            'name': 'test',
+            'type': 'postgres',
+            'host': 'localhost',
+            'port': 5432,
+            'dbname': 'reports',
+            'user': 'max',
+            'password': '12345',
+        },
+        'mysql': {
+            'type': 'mysql',
+            'name': 'mysql',
+            'host': 'localhost',
+            'port': 3306,
+            'dbname': 'test',
+            'user': 'max',
+            'password': '12345',
+        }
+    },
+}
