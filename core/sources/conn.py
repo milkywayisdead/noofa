@@ -318,3 +318,11 @@ class JsonSource(DataSource):
 
     def get_fields(self, **kwargs):
         return []
+
+
+_SOURCES_DICT = {
+    'postgres': PostgresSource,
+    'mysql': MySqlSource,
+    'redis': RedisSource,
+    'json': JsonSource,
+}
