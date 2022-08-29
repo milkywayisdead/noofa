@@ -87,6 +87,7 @@ class Qbuilder:
             on_l, on_r = join['on']['l'], join['on']['r']
             J = _JOINS.get(j, 'inner')
             l, r = self._tables[l], self._tables[r]
+            l.has_field(on_l), r.has_field(on_r)
             joins.append(J(l, r, (on_l, on_r)))
 
         return joins
