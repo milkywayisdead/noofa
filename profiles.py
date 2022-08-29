@@ -31,23 +31,6 @@ class ReportSchema:
     def dataframes(self):
         return self._dataframes
 
-    @staticmethod
-    def from_json(json_schema={}):
-        schema = ReportSchema()
-        sources = json_schema.get('sources', {})
-        dataframes = json_schema.get('dataframes', {})
-        sources_set = SourcesSet()
-        dataframes_set = DataframesSet()
-
-        for n, s in sources.items():
-            source = Source(s)
-            sources_set.add(source)
-
-        schema.sources = sources_set
-        schema.dataframes = dataframes_set
-
-        return schema
-
 
 class SourcesSet:
     def __init__(self, **kwargs):

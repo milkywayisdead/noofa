@@ -1,5 +1,5 @@
 from . import query
-from .tests import pg
+from noofa.tests import pg
 
 
 _JOINS = {
@@ -69,6 +69,11 @@ class Qbuilder:
         self._joins_list = query.get('joins', [])  # список соединений в запросе
         self._filters_list = query.get('filters', [])  # список фильтров в запросе
         self._values_list = query.get('values', [])  # список запрашиваемых полей
+        self._limit = query.get('limit', None)
+        try:
+            int(self._limit)
+        except:
+            self._limit = None
 
     def parse_joins(self):
         """
@@ -107,13 +112,16 @@ class Qbuilder:
                         qb = Qbuilder(self._tables, val)
                         val = qb.parse_query()
 
-                _filter = _filter(f['field'], val)
+                table = self._tables[f['table']]
+                field_name = f['field']
+                table.has_field(field_name)
+                _filter = _filter(field_name, val)
                 return query.Q(_filter)
         else:
             op = f['op'].lower()
             res = []
             for i in f['filters']:
-                res.append(parse(i))
+                res.append(self._parse_filters(i))
 
             q = query.Q()
             for i in res:
@@ -143,6 +151,8 @@ class Qbuilder:
         """
         joins, filters = self.parse_joins(), self.parse_filters()
         q = self._base_table.select().join(*joins).where(*filters)
+        if self._limit is not None:
+            q.limit(self._limit)
         return q
 
 
@@ -154,17 +164,18 @@ jsq = {
         {'l': 'category', 'r': 'film_category', 'j': 'inner', 'on': {'l': 'category_id', 'r': 'category_id'}},
     ],
     'filters': [
-        {'isQ': False, 'field': 'category.category_id', 'op': '==', 'value': 5},
+        {'isQ': False, 'table': 'category', 'field': 'category_id', 'op': '==', 'value': 5},
         {'isQ': True, 'op': 'OR', 'filters': [
-            {'isQ': False, 'field': 'category.category_id', 'op': '>', 'value': 5},
-            {'isQ': False, 'field': 'category.category_id', 'op': '<', 'value': 100},
+            {'isQ': False, 'table': 'category', 'field': 'category_id', 'op': '>', 'value': 5},
+            {'isQ': False, 'table': 'category', 'field': 'category_id', 'op': '<', 'value': 100},
             {'isQ': True, 'op': 'AND', 'filters': [
-                {'isQ': False, 'field': 'film_category.category_id', 'op': '>', 'value': 8},
-                {'isQ': False, 'field': 'category.category_id', 'op': '<', 'value': 10},
+                {'isQ': False, 'table': 'film_category', 'field': 'category_id', 'op': '>', 'value': 8},
+                {'isQ': False, 'table': 'category', 'field': 'category_id', 'op': '<', 'value': 10},
             ]}
         ]},
     ],
     'values': [],
+    'limit': 5,
 }
 
 # пример запроса с подзапросами в фильтрах IN
@@ -175,17 +186,17 @@ jsq1 = {
         {'l': 'category', 'r': 'film_category', 'j': 'inner', 'on': {'l': 'category_id', 'r': 'category_id'}},
     ],
     'filters': [
-        {'isQ': False, 'field': 'category.category_id', 'op': 'in', 'value': {
+        {'isQ': False, 'table': 'category', 'field': 'category_id', 'op': 'in', 'value': {
             'isSubquery': True,
              'base': 'category',
              'tables': ['category'],
         }},
-        {'isQ': False, 'field': 'category.category_id', 'op': 'in', 'value': {
+        {'isQ': False, 'table': 'category', 'field': 'category_id', 'op': 'in', 'value': {
             'isSubquery': True,
             'base': 'category',
             'tables': ['category'],
             'filters': [
-                {'isQ': False, 'field': 'category.category_id', 'op': 'in', 'value': {
+                {'isQ': False, 'table': 'category', 'field': 'category_id', 'op': 'in', 'value': {
                     'isSubquery': True,
                     'base': 'category',
                     'tables': ['category'],
@@ -197,6 +208,16 @@ jsq1 = {
 }
 
 def test():
+    subs = _find_subqueries(jsq1['filters'])
+    tables = jsq1['tables'] + list(_find_tables(subs))
+    pg.open()
+    tables = {t: pg.get_table(t) for t in tables}
+
+    qb = Qbuilder(tables, jsq)
+
+    return qb
+
+def test2():
     subs = _find_subqueries(jsq1['filters'])
     tables = jsq1['tables'] + list(_find_tables(subs))
     pg.open()

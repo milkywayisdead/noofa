@@ -90,6 +90,7 @@ class PostgresSource(DatabaseSource):
             dbname=self._dbname,
             user=self._user,
             password=self._password,
+            connect_timeout=3,
         )
 
         return conn
@@ -181,6 +182,7 @@ class MySqlSource(DatabaseSource):
             database=self._dbname,
             user=self._user,
             password=self._password,
+            connect_timeout=3,
         )
 
         return conn

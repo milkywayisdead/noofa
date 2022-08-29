@@ -460,7 +460,9 @@ class Table:
         self.columns = ColumnSet(_columns)
 
     def has_field(self, field):
-        return field in self._fields_names
+        if field in self._fields_names:
+            return True
+        raise NoSuchFieldError(field)
 
     def get_fields_names(self):
         return self._fields_names
