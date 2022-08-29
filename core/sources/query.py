@@ -21,8 +21,12 @@ class Join:
 
     def __str__(self):
         right_name, left_name = self._right._name, self._left._name
+        left_on, right_on = self._on[0], self._on[1]
+        if self._left._enquote or self._right._enquote:
+            right_name, left_name = f'"{right_name}"', f'"{left_name}"'
+            left_on, right_on = f'"{left_on}"', f'"{right_on}"'
         s = f'{self.__class__.join_type} JOIN {right_name} '
-        s += f'ON {left_name}.{self._on[0]} = {right_name}.{self._on[1]}'
+        s += f'ON {left_name}.{left_on} = {right_name}.{right_on}'
         return s
 
 
@@ -460,14 +464,23 @@ class Table:
         self.columns = ColumnSet(_columns)
 
     def has_field(self, field):
+        """
+        Проверка, есть ли поле в таблице.
+        """
         if field in self._fields_names:
             return True
         raise NoSuchFieldError(field)
 
     def get_fields_names(self):
+        """
+        Список полей таблицы.
+        """
         return self._fields_names
 
     def get_verbose_names(self):
+        """
+        Список полных названий полей (с названием таблице в префиксе).
+        """
         if self._enquote:
             verbose_names = [f'"{self._name}"."{field}"' for field in self._fields_names]
         else:    
@@ -475,4 +488,7 @@ class Table:
         return verbose_names
 
     def select(self, *fields):
+        """
+        Создание объекта простого select-запроса.
+        """
         return SelectQuery(self, *fields)

@@ -69,7 +69,7 @@ class Qbuilder:
         self._joins_list = query.get('joins', [])  # список соединений в запросе
         self._filters_list = query.get('filters', [])  # список фильтров в запросе
         self._values_list = query.get('values', [])  # список запрашиваемых полей
-        self._limit = query.get('limit', None)
+        self._limit = query.get('limit', None)  #  limit в запросе
         try:
             int(self._limit)
         except:
@@ -87,7 +87,6 @@ class Qbuilder:
             on_l, on_r = join['on']['l'], join['on']['r']
             J = _JOINS.get(j, 'inner')
             l, r = self._tables[l], self._tables[r]
-
             joins.append(J(l, r, (on_l, on_r)))
 
         return joins
@@ -112,9 +111,14 @@ class Qbuilder:
                         qb = Qbuilder(self._tables, val)
                         val = qb.parse_query()
 
-                table = self._tables[f['table']]
+                table_name = f['table']
                 field_name = f['field']
+                table = self._tables[table_name]
                 table.has_field(field_name)
+                if table._enquote:
+                    field_name = f'"{table_name}"."{field_name}"'
+                else:
+                    field_name = f'{table_name}.{field_name}'
                 _filter = _filter(field_name, val)
                 return query.Q(_filter)
         else:
