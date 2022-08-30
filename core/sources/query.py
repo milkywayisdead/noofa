@@ -307,6 +307,10 @@ class LtFilter(Filter):
 class LikeFilter(Filter):
     operator = 'LIKE'
 
+    def __init__(self, field_name, value):
+        self._field_name = field_name
+        self._params = [f'%{value}%']
+
 
 class InFilter:
     """ IN """
