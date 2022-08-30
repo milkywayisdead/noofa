@@ -1,5 +1,4 @@
 from . import query
-from noofa.tests import pg
 
 
 _JOINS = {
@@ -211,23 +210,3 @@ jsq1 = {
     ],
     'values': [],
 }
-
-def test():
-    subs = _find_subqueries(jsq1['filters'])
-    tables = jsq1['tables'] + list(_find_tables(subs))
-    pg.open()
-    tables = {t: pg.get_table(t) for t in tables}
-
-    qb = Qbuilder(tables, jsq)
-
-    return qb
-
-def test2():
-    subs = _find_subqueries(jsq1['filters'])
-    tables = jsq1['tables'] + list(_find_tables(subs))
-    pg.open()
-    tables = {t: pg.get_table(t) for t in tables}
-
-    qb = Qbuilder(tables, jsq1)
-
-    return qb
