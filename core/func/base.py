@@ -101,13 +101,6 @@ class TypeconvFunc(Func):
     group = 'typeconv'
 
 
-class DataframeFunc(Func):
-    """
-    Функция для работы с датафреймами.
-    """
-    group = 'df'
-
-
 class DatastructFunc(Func):
     """
     Функция для работы со структурами данных.

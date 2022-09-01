@@ -324,7 +324,7 @@ class JsonSource(DataSource):
         return []
 
 
-_SOURCES_DICT = {
+SOURCES_DICT = {
     'postgres': PostgresSource,
     'mysql': MySqlSource,
     'redis': RedisSource,

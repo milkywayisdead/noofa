@@ -51,9 +51,13 @@ class Parser:
         elif type_ == 'operator':
             nxt = self.next_expression(None)
             return self.next_expression({'type': 'operator', 'value': value, 'left': prev, 'right': nxt})
-        elif type_ == '(':
-            args = self._scan_args(func=prev)
-            return self.next_expression({'type': 'call', 'function': prev, 'args': args})
+        elif type_ in '([':
+            if type_ == '(':
+                args = self._scan_args(func=prev)
+                return self.next_expression({'type': 'call', 'function': prev, 'args': args})
+            elif type_ == '[':
+                args = self._scan_args(func=prev, end=']')
+                return self.next_expression({'type': 'context', 'var': prev, 'args': args})
         else:
             raise ExpressionParsingError(f'Неожиданный токен: {(type_, value)}')
 
@@ -105,10 +109,10 @@ class FormulaLexer:
     """
     def __init__(self, tokens):
         self._rules = [
+            NumberRule(),
             SymbolRule(),
             OperatorRule(),
             StringRule(),
-            NumberRule(),
             ErrorRule(),
         ]
 
@@ -124,7 +128,7 @@ class FormulaLexer:
                 token = stream.next
             if token in ' \n':
                 ready_for_next = True
-            elif token in '(),;':
+            elif token in '(),;[]':
                 ready_for_next = True
                 yield {'type': token, 'value': ''}
             for rule in self._rules:
@@ -157,7 +161,7 @@ class SymbolRule(Rule):
     Правило для символов.
     """
     def match(self, token):
-        if re.match('[a-zA-Z_]', token):
+        if re.match('[a-zA-Z_0-9]', token):
             return True
 
     def scan(self, token_stream, token):
@@ -170,7 +174,7 @@ class SymbolRule(Rule):
 
     @property
     def scan_re(self):
-        return '[a-zA-Z_]'
+        return '[a-zA-Z_0-9]'
 
     @property
     def type(self):
@@ -260,7 +264,7 @@ class OperatorRule(Rule):
 
 class ErrorRule(Rule):
     def match(self, token):
-        if not re.match('[ \n0-9a-zA-Z_();.,+-/*]', token):
+        if not re.match('[ \n0-9a-zA-Z_()\[\];.,+-/*]', token):
             raise ExpressionParsingError(f'Неизвестный токен: {token}')
 
     def scan(self, token_stream, token):

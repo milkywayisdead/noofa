@@ -1,8 +1,7 @@
-from .base import (
-    DataframeFunc, 
-    NonMandatoryArg, 
-    MandatoryArg,
-)
+"""
+Интерпретатор функций.
+"""
+from .base import Func, MandatoryArg
 from .parser import parse
 from ._functions import FUNCTIONS_DICT as _functions_dict
 from ._functions import OPERATORS_DICT as _operators_dict
@@ -18,10 +17,10 @@ class Interpreter:
     Интерпретатор для выполнения функций и вычислений. 
     """
     def __init__(self, **context):
-        self._dataframes = context.get('dataframes', {})
-        self._variables = context.get('variables', {})
         self._functions_dict = {**_functions_dict}
+        self._functions_dict.update(_context_funcs)
         self._operators_dict = _operators_dict
+        self._context = Context(**context)
 
     def evaluate(self, expression):
         """
@@ -42,7 +41,7 @@ class Interpreter:
             return True
         type_ = stree['type']
         if type_ == 'symbol':
-            return False
+            return True
         if type_ == 'number':
             if stree['value'].count('.') > 1:
                 return False
@@ -56,6 +55,16 @@ class Interpreter:
                 if not sign in ('+', '-'):
                     return False
             if right is None:
+                return False
+        if type_ == 'context':
+            args = stree['args']
+            for arg in args:
+                if not self._check_syntax(arg):
+                    return False
+            var_ = stree['var']
+            if var_ is None:
+                return False
+            if len(args) == 0:
                 return False
         if type_ == 'call':
             args = stree['args']
@@ -76,6 +85,9 @@ class Interpreter:
         if stree is None:
             return None
         type_ = stree['type']
+        if type_ == 'symbol':
+            _func = self._get_function(GetFromContext.get_name())
+            return _func(self._context, stree['value'])
         if type_ == 'string':
             func = self._get_function('to_str')
             return func(stree['value'])
@@ -92,6 +104,15 @@ class Interpreter:
             left, right = self._eval(stree['left']), self._eval(stree['right'])
             func = self._get_operator(sign)
             return func(left, right)
+        if type_ == 'context':
+            slice_ = []
+            for arg in stree['args']:
+                r = self._eval(arg)
+                slice_.append(r())
+            var_ = stree['var']['value']
+            _func = self._get_function(GetSlice.get_name())
+            var_ = self._context.get(var_)
+            return _func(var_, slice_)
         if type_ == 'call':
             args = []
             for arg in stree['args']:
@@ -197,26 +218,6 @@ class Interpreter:
                     res.append(o)
         return res
 
-    def _same_priority(self, unpacked_operator):
-        # удалить в дальнейшем
-        """
-        Проверка распакованного оператора на наличие
-        операций с различными приоритетами.
-        Возвращает True, если операторы обладают одинаковым
-        приоритетом, либо если unpacked_operator пуст.
-        """
-        same_priority = True
-        operators = []
-        for i in unpacked_operator:
-            type_ = type(i)
-            if type_ is str:
-                if i in _OPERATORS:
-                    operators.append(_OPERATORS_PRIORITY[i])
-        if operators:
-            operators = set(operators)
-            same_priority = len(operators) == 1
-        return same_priority
-
     """
     def get_df(self, df_name):
         getdf = GetDf(df_name)
@@ -240,54 +241,163 @@ class Interpreter:
     """
 
 
-class GetDf(DataframeFunc):
+# class GetDf(DataframeFunc):
+#     """
+#     Функция получения датафрейма.
+#     """
+#     description = 'Получение датафрейма'
+#     args_description = [
+#         MandatoryArg('Название датафрейма', 0),
+#     ]
+
+#     @property
+#     def name(self):
+#         return 'get_df'
+
+#     def _operation(self, df_name):
+#         return self.context[df_name]
+
+
+# class GetCol(DataframeFunc):
+#     """
+#     Функция получения столбца датафрейма.
+#     """
+#     description = 'Получение столбца датафрейма'
+#     args_description = [
+#         MandatoryArg('Датафрейм', 0),
+#         MandatoryArg('Название столбца', 1),
+#     ]
+
+#     @property
+#     def name(self):
+#         return 'get_col'
+
+#     def _operation(self, df, col_name):
+#         return df[col_name]
+
+
+# class GetRow(DataframeFunc):
+#     """
+#     Функция получения строки датафрейма.
+#     """
+#     description = 'Получение строки датафрейма'
+#     args_description = [
+#         MandatoryArg('Датафрейм', 0),
+#         MandatoryArg('Номер строки', 1),
+#     ]
+
+#     @property
+#     def name(self):
+#         return 'get_row'
+
+#     def _operation(self, df, index):
+#         return df.iloc[index]
+
+
+class GetFromContext(Func):
     """
-    Функция получения датафрейма.
+    Функция получения значения из контекста интерпретатора.
+    Используется на уровне интерпретатора, во "внешний мир" не выводить.
     """
-    description = 'Получение датафрейма'
+    group = 'context'
+    description = 'Функция контекста'
     args_description = [
-        MandatoryArg('Название датафрейма', 0),
+        MandatoryArg('context', 0),
+        MandatoryArg('var', 1),
     ]
 
-    @property
-    def name(self):
-        return 'get_df'
+    @classmethod
+    def get_name(cls):
+        return '_getfromcontext'
 
-    def _operation(self, df_name):
-        return self.context[df_name]
+    def _operation(self, *args):
+        return args[0].get(args[1])
 
 
-class GetCol(DataframeFunc):
+class GetSlice(Func):
     """
-    Функция получения столбца датафрейма.
+    Функция получения среза, столбца либо строки датафрейма.
+    Используется на уровне интерпретатора, во "внешний мир" не выводить.
     """
-    description = 'Получение столбца датафрейма'
+    group = 'context'
+    description = 'Функция контекста'
     args_description = [
-        MandatoryArg('Датафрейм', 0),
-        MandatoryArg('Название столбца', 1),
+        MandatoryArg('context', 0),
+        MandatoryArg('var', 1),
     ]
 
-    @property
-    def name(self):
-        return 'get_col'
+    @classmethod
+    def get_name(cls):
+        return '_getslice'
 
-    def _operation(self, df, col_name):
-        return df[col_name]
+    def _operation(self, *args):
+        df, slice_ = args[0], args[1]
+        return df[slice_]
 
 
-class GetRow(DataframeFunc):
+_context_funcs = {
+    GetFromContext.get_name(): GetFromContext,
+    GetSlice.get_name(): GetSlice,
+}
+
+
+class Context:
     """
-    Функция получения строки датафрейма.
+    Контекст интерпретатора.
     """
-    description = 'Получение строки датафрейма'
-    args_description = [
-        MandatoryArg('Датафрейм', 0),
-        MandatoryArg('Номер строки', 1),
-    ]
+    def __init__(self, **kwargs):
+        self.global_context = {**kwargs}  # глобальный контекст (весь отчёт)
+        self.local_context = {}  #  локальный контекст (в случае выч. значения в строке или столбце)
+        self._current_context = self.global_context
+        self._using_local = False
 
-    @property
-    def name(self):
-        return 'get_row'
+    def switch_to_global(self):
+        """
+        Переключение контекста на глобальный.
+        """
+        self._using_local = False
+        self._current_context = self.global_context
 
-    def _operation(self, df, index):
-        return df.iloc[index]
+    def switch_to_local(self):
+        """
+        Переключение контекста на локальный.
+        """
+        self._using_local = True
+        self._current_context = self.local_context
+
+    def add_to_global(self, key, value):
+        """
+        Добавление в глобальный контекст.
+        """
+        self.global_context[key] = value
+
+    def add_to_local(self, key, value):
+        """
+        Добавление в локальный контекст.
+        """
+        self.local_context[key] = value
+
+    def add(self, key, value):
+        """
+        Добавление в текущий контекст.
+        """
+        self._current_context[key] = value
+
+    def get(self, key):
+        """
+        Получение значения из текущ. либо глобального контекста.
+        """
+        try:
+            return self._current_context[key]
+        except KeyError:
+            return self.global_context[key]
+
+    def remove(self, key):
+        """
+        Удаление из текущего контекста.
+        """
+        self._current_context.pop(key)
+
+    
+
+    
