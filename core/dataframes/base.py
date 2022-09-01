@@ -130,18 +130,3 @@ class Panda:
         for f in jsfilters:
             filters.append(self._parse_filter(f))
         return PandaQ(*filters)
-
-
-
-
-
-
-def test():
-    from noofa.tests import pg
-    pg.open()
-    t1 = pg.get_table('film')
-    t2 = pg.get_table('film_actor')
-    p1 = Panda(pg.get_data(t1.select()))
-    p2 = Panda(pg.get_data(t2.select()))
-    pg.close()
-    return p1, p2

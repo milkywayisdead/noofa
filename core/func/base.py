@@ -147,31 +147,3 @@ class MandatoryArg(NonMandatoryArg):
     Обязательный аргумент.
     """
     mandatory = True
-
-
-class Result:
-    """
-    Результат вычисления формулы.
-    """
-    is_bad = False
-
-    def __init__(self, value):
-        self._value = value
-
-    @property
-    def value(self):
-        return self._value
-
-    @property
-    def is_bad(self):
-        return self.__class__.is_bad
-
-
-class ErrorResult(Result):
-    """
-    Результат выполнения с ошибкой.
-    """
-    is_bad = True
-
-    def __init__(self, value=None):
-        super().__init__('#ERROR')

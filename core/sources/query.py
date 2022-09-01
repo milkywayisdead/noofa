@@ -304,12 +304,28 @@ class LtFilter(Filter):
     operator = '<'
 
 
-class LikeFilter(Filter):
+class ContainsFilter(Filter):
     operator = 'LIKE'
 
     def __init__(self, field_name, value):
         self._field_name = field_name
         self._params = [f'%{value}%']
+
+
+class StartsWithFilter(Filter):
+    operator = 'LIKE'
+
+    def __init__(self, field_name, value):
+        self._field_name = field_name
+        self._params = [f'{value}%']
+
+
+class EndsWithFilter(Filter):
+    operator = 'LIKE'
+
+    def __init__(self, field_name, value):
+        self._field_name = field_name
+        self._params = [f'%{value}']
 
 
 class InFilter:

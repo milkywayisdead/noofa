@@ -14,7 +14,9 @@ _FILTERS = {
     '>=': query.GeFilter,
     '<': query.LtFilter,
     '<=': query.LeFilter,
-    '%': query.LikeFilter,
+    'contains': query.ContainsFilter,
+    'endswith': query.StartsWithFilter,
+    'startswith': query.EndsWithFilter,
     'in': query.InFilter,
 }
 
@@ -158,6 +160,10 @@ class Qbuilder:
         if self._limit is not None:
             q.limit(self._limit)
         return q
+
+
+def collect_query_filters():
+    return list(_FILTERS.keys())
 
 
 # пример запроса

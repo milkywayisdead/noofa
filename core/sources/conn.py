@@ -330,3 +330,7 @@ SOURCES_DICT = {
     'redis': RedisSource,
     'json': JsonSource,
 }
+
+
+def get_source_class(type_):
+    return SOURCES_DICT.get(type_, None)
