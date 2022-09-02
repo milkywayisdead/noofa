@@ -5,7 +5,7 @@
     # словарь с источниками
     sources: {
         name1: {
-            name: название,
+            id: название,
             type: тип,
             host: хост,
             port: порт,
@@ -17,8 +17,11 @@
 
     # словарь с запросами
     queries: {
-        source: название источника,
-        ... тело запроса,
+        id: { 
+            id: идентификатор запроса,
+            source: название источника,
+            query: тело запроса,
+        },
     },
 
     # словарь с датафреймами
@@ -82,7 +85,7 @@ jsq1 = {
 test_conf = {
     'sources': {
         'test': {
-            'name': 'test',
+            'id': 'test',
             'type': 'postgres',
             'host': 'localhost',
             'port': 5432,
@@ -92,7 +95,7 @@ test_conf = {
         },
         'mysql': {
             'type': 'mysql',
-            'name': 'mysql',
+            'id': 'mysql',
             'host': 'localhost',
             'port': 3306,
             'dbname': 'test',
@@ -102,24 +105,24 @@ test_conf = {
     },
     'queries': {
         'test1': {
-            'name': 'test1',
+            'id': 'test1',
             'source': 'test',
             'query': jsq,
         },
         'test2': {
-            'name': 'test2',
+            'id': 'test2',
             'source': 'test',
             'query': jsq1,
         }
     },
     'dataframes': {
         'test5': {
-            'name': 'test5',
+            'id': 'test5',
             'source': 'test',
             'query': 'test1',
         },
         'test6': {
-            'name': 'test6',
+            'id': 'test6',
             'source': 'test',
             'query': 'test2',
         }

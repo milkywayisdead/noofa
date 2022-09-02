@@ -16,29 +16,29 @@ class DataSchema:
         self._dataframes = kwargs.get('dataframes', {})
 
     def add_source(self, **options):
-        name = options.pop('name')
+        id_ = options.pop('id')
         type_ = options.pop('type')
         source_cls = get_source_class(type_)
         conn = source_cls(**options)
-        self._sources[name] = SchemaSource(name, connection=conn)
+        self._sources[id_] = SchemaSource(id_, connection=conn)
         return self
 
     def add_query(self, **options):
-        name = options['name']
+        id_ = options['id']
         source_name = options['source']
         source = self._sources[source_name]
         query_as_json = options['query']
-        self._queries[name] = SchemaQuery(name, query_as_json, source)
+        self._queries[id_] = SchemaQuery(id_, query_as_json, source)
         return self
 
     def add_dataframe(self, **options):
-        name = options['name']
+        id_ = options['id']
         source = self._sources[options['source']]
         if not source.is_sql:
             query = None
         else:
             query = self._queries[options['query']]
-        self._dataframes[name] = SchemaDataframe(name, source, query)
+        self._dataframes[id_] = SchemaDataframe(id_, source, query)
         return self     
 
     def from_json(self, json_schema):
@@ -58,8 +58,8 @@ class SchemaSource:
     """
     Источник в схеме профиля.
     """
-    def __init__(self, name, **kwargs):
-        self.name = name
+    def __init__(self, id_, **kwargs):
+        self.id = id_
         self.connection = kwargs.get('connection', None)
 
     @property
@@ -92,8 +92,8 @@ class SchemaQuery:
     """
     Запрос в схеме профиля.
     """
-    def __init__(self, name, query_as_json, source=None):
-        self.name = name
+    def __init__(self, id_, query_as_json, source=None):
+        self.id = id_
         self._query_as_json = query_as_json
         self._source = source
 
@@ -114,8 +114,8 @@ class SchemaDataframe:
     """
     Датафрейм в схеме профиля.
     """
-    def __init__(self, name, source, query=None):
-        self.name = name
+    def __init__(self, id_, source, query=None):
+        self.id = id_
         self._source = source
         self._query = query
         
