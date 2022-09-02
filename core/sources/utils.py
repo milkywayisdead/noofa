@@ -1,3 +1,4 @@
+from inspect import Attribute
 from . import query
 
 
@@ -21,24 +22,36 @@ _FILTERS = {
 }
 
 
-def _find_subqueries(query_filters):
+def collect_tables(query_as_json):
+    subqueries = _find_subqueries(query_as_json)
+    tables = _find_tables([query_as_json] + subqueries)
+    return list(set(tables))
+
+def _find_subqueries(query):
     """
     Поиск подзапросов в запросе в виде словаря.
     """
     res = []
 
-    for f in query_filters:
-        val = f['value']
-        try:
-            is_subquery = val['isSubquery']
-        except:
-            continue
+    try:
+        query_filters = query.get('filters', [])
+    except AttributeError:
+        query_filters = query
+    for filter_ in query_filters:
+        is_q = filter_['is_complex']
+        if is_q:
+            res += _find_subqueries(filter_)
         else:
-            if is_subquery:
-                res.append(val)
-            filters = val.get('filters', [])
-            res += _find_subqueries(filters)
-
+            val = filter_['value']
+            try:
+                is_subquery = val['is_subquery']
+            except:
+                continue
+            else:
+                if is_subquery:
+                    res.append(val)
+                filters = val.get('filters', [])
+                res += _find_subqueries(filters)
     return res
 
 def _find_tables(queries):
@@ -50,8 +63,7 @@ def _find_tables(queries):
         _tables = s.get('tables', [])
         if _tables:
             tables += _tables
-
-    return set(tables)
+    return tables
 
 
 class Qbuilder:
@@ -97,7 +109,7 @@ class Qbuilder:
         """
         Построение объекта составного фильтра Q.
         """
-        if f['isQ'] == False:
+        if f['is_complex'] == False:
             # если фильтр простой 
             # создать простой фильтр
             _filter = _FILTERS.get(f['op'], None)
@@ -105,7 +117,7 @@ class Qbuilder:
                 val = f['value']
                 # парсить подзапрос
                 try:
-                    is_subquery = val['isSubquery']
+                    is_subquery = val['is_subquery']
                 except:
                     pass
                 else:
@@ -164,55 +176,3 @@ class Qbuilder:
 
 def collect_query_filters():
     return list(_FILTERS.keys())
-
-
-# пример запроса
-jsq = {
-    'base': 'category',
-    'tables': ['category', 'film_category'],
-    'joins': [
-        {'l': 'category', 'r': 'film_category', 'j': 'inner', 'on': {'l': 'category_id', 'r': 'category_id'}},
-    ],
-    'filters': [
-        {'isQ': False, 'table': 'category', 'field': 'category_id', 'op': '==', 'value': 5},
-        {'isQ': True, 'op': 'OR', 'filters': [
-            {'isQ': False, 'table': 'category', 'field': 'category_id', 'op': '>', 'value': 5},
-            {'isQ': False, 'table': 'category', 'field': 'category_id', 'op': '<', 'value': 100},
-            {'isQ': True, 'op': 'AND', 'filters': [
-                {'isQ': False, 'table': 'film_category', 'field': 'category_id', 'op': '>', 'value': 8},
-                {'isQ': False, 'table': 'category', 'field': 'category_id', 'op': '<', 'value': 10},
-            ]}
-        ]},
-    ],
-    'values': [],
-    'limit': 5,
-}
-
-# пример запроса с подзапросами в фильтрах IN
-jsq1 = {
-    'base': 'category',
-    'tables': ['category', 'film_category'],
-    'joins': [
-        {'l': 'category', 'r': 'film_category', 'j': 'inner', 'on': {'l': 'category_id', 'r': 'category_id'}},
-    ],
-    'filters': [
-        {'isQ': False, 'table': 'category', 'field': 'category_id', 'op': 'in', 'value': {
-            'isSubquery': True,
-             'base': 'category',
-             'tables': ['category'],
-        }},
-        {'isQ': False, 'table': 'category', 'field': 'category_id', 'op': 'in', 'value': {
-            'isSubquery': True,
-            'base': 'category',
-            'tables': ['category'],
-            'filters': [
-                {'isQ': False, 'table': 'category', 'field': 'category_id', 'op': 'in', 'value': {
-                    'isSubquery': True,
-                    'base': 'category',
-                    'tables': ['category'],
-                }},
-            ]
-        }},
-    ],
-    'values': [],
-}

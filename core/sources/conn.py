@@ -12,6 +12,8 @@ class DataSource(ABC):
     Абстрактный источник.
     """
 
+    _is_sql = False
+
     @abstractmethod
     def get_connection(self):
         """
@@ -26,8 +28,14 @@ class DataSource(ABC):
         """
         pass
 
+    @property
+    def is_sql(self):
+        return self.__class__._is_sql
+
 
 class DatabaseSource(DataSource):
+    _is_sql = True
+
     @abstractmethod
     def get_tables(self):
         """
@@ -71,16 +79,13 @@ class PostgresSource(DatabaseSource):
 
     def get_tables(self):
         tables = []
-
         with self.connection.cursor() as cursor:
             q = "SELECT table_name FROM information_schema.tables "
             q += "WHERE table_name NOT LIKE 'pg_%' AND "
             q += "table_schema <> 'information_schema';"
             cursor.execute(q)
             res = cursor.fetchall()
-
         tables = [r[0] for r in res]
-
         return tables
 
     def get_connection(self, **kwargs):
@@ -92,7 +97,6 @@ class PostgresSource(DatabaseSource):
             password=self._password,
             connect_timeout=3,
         )
-
         return conn
 
     def open(self):
@@ -116,27 +120,22 @@ class PostgresSource(DatabaseSource):
                 cursor.execute(q)
 
             _data = cursor.fetchall()
-            #desc = [i.name for i in cursor.description]
-            desc = fields
-            
+            desc = fields 
             for d in _data:
                 datapiece = {}
                 for n, i in enumerate(d):
                     datapiece[desc[n]] = i
                 data.append(datapiece)
-
         return data
 
     def get_fields(self, table_name, **kwargs):
         fields = []
-
         with self.connection.cursor() as cursor:
             q = "SELECT column_name, data_type FROM information_schema.columns "
             q += "WHERE table_name = %s"
             cursor.execute(q, (table_name, ))
             res = cursor.fetchall()
             fields = [column[0] for column in res]
-
         return fields
 
     def get_table(self, table_name):
@@ -145,7 +144,6 @@ class PostgresSource(DatabaseSource):
 
         table_name - имя таблицы из бд.
         """
-
         from .query import Table
         return Table(table_name, self.get_fields(table_name), enquote=True)
 
@@ -164,15 +162,12 @@ class MySqlSource(DatabaseSource):
 
     def get_tables(self):
         tables = []
-
         with self.connection.cursor() as cursor:
             q = "SELECT table_name FROM information_schema.tables "
             q += "WHERE table_schema <> 'information_schema';"
             cursor.execute(q)
             res = cursor.fetchall()
-
         tables = [r[0] for r in res]
-
         return tables
 
     def get_connection(self, **kwargs):
@@ -184,7 +179,6 @@ class MySqlSource(DatabaseSource):
             password=self._password,
             connect_timeout=3,
         )
-
         return conn
 
     def open(self):
@@ -200,7 +194,6 @@ class MySqlSource(DatabaseSource):
         q, params = query.str_and_params()
         fields = query.requested
         data = []
-
         with self.connection.cursor() as cursor:
             if params:
                 cursor.execute(q, params)
@@ -208,27 +201,22 @@ class MySqlSource(DatabaseSource):
                 cursor.execute(q)
 
             _data = cursor.fetchall()
-            #desc = [i[0] for i in cursor.description]
             desc = fields
-            
             for d in _data:
                 datapiece = {}
                 for n, i in enumerate(d):
                     datapiece[desc[n]] = i
                 data.append(datapiece)
-
         return data
 
     def get_fields(self, table_name, **kwargs):
         fields = []
-
         with self.connection.cursor() as cursor:
             q = "SELECT column_name, data_type FROM information_schema.columns "
             q += "WHERE table_name = %s"
             cursor.execute(q, (table_name, ))
             res = cursor.fetchall()
             fields = [column[0] for column in res]
-
         return fields
 
 
@@ -250,7 +238,6 @@ class RedisSource(DataSource):
             username=self._username,
             password=self._password,
         )
-
         return conn
 
     def open(self):
@@ -263,25 +250,21 @@ class RedisSource(DataSource):
 
     def get_data(self, **kwargs):
         data = []
-
         with self.connection as conn:
             _data = conn.hgetall(self.source)
 
             for k, d in _data.items():
                 data.append(json.loads(d))
-
         return data
 
     def get_fields(self, **kwargs):
         fields = []
-
         with self.connection as conn:
             if conn.hlen(self.source):
                 rand_key = choice(conn.hkeys(self.source))
                 rand_value = conn.hget(self.source, rand_key)
                 rand_value = json.loads(rand_value)
                 fields = list(rand_value.keys())
-
         return fields
 
 
@@ -307,7 +290,6 @@ class JsonSource(DataSource):
 
     def get_data(self, **kwargs):
         data = {}
-
         with self.connection as conn:
             resp = conn.get(
                 self._url,
@@ -315,9 +297,7 @@ class JsonSource(DataSource):
                 auth=self._auth,
                 params=self._params
             )
-
             data = resp.json()
-
         return data
 
     def get_fields(self, **kwargs):

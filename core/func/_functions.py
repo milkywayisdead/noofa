@@ -58,11 +58,10 @@ def _collect_operators():
                 OPERATORS_DICT[p.sign] = p
 
 
-_collect_functions()
-_collect_operators()
-
-
-def collect_description():
+def collect_func_info():
+    """
+    Сбор информации по функциям.
+    """
     res = {}
     for fname, f in FUNCTIONS_DICT.items():
         fgroup = f.get_group()
@@ -70,3 +69,7 @@ def collect_description():
             res[fgroup] = {}
         res[fgroup][fname] = f.get_description()
     return res
+
+
+_collect_functions()
+_collect_operators()
