@@ -110,10 +110,18 @@ test_conf = {
         'test1': {
             'id': 'test1',
             'source': 'test',
-            'query': {'base': 'actor', 'tables': ['actor'], 'order_by': [
-                {'table': 'actor', 'fields': ['last_name'], 'type': 'desc'},
+            'query': {'base': 'city', 'tables': ['city']}, #'order_by': [
+                #{'table': 'city', 'fields': ['last_name'], 'type': 'desc'},
                 #{'table': 'actor', 'fields': ['last_update'], 'type': 'desc'},
-            ]},
+            #]},
+        },
+        'test0': {
+            'id': 'test0',
+            'source': 'test',
+            'query': {'base': 'address', 'tables': ['address']}, #, 'order_by': [
+                #{'table': 'film', 'fields': ['last_update'], 'type': 'desc'},
+                #{'table': 'actor', 'fields': ['last_update'], 'type': 'desc'},
+            #]},
         },
         'test2': {
             'id': 'test2',
@@ -131,20 +139,53 @@ test_conf = {
             'id': 'test5',
             'source': 'test',
             'query': 'test1',
+            'composite': False,
         },
         'test6': {
             'id': 'test6',
             'source': 'test',
             'query': 'test2',
+            'composite': False,
         },
         'test7': {
             'id': 'test7',
             'source': 'mysql',
             'query': 'test3',
+            'composite': False,
+        },
+        'test8': {
+            'id': 'test8',
+            'composite': True,
+            'build': {
+                'type': 'union',
+                'dataframes': [], #['test7', 'test6'],
+            },
+            'source': None,
+            'query': None,
+        },
+        'test0': {
+            'id': 'test0',
+            'composite': False,
+            'source': 'test',
+            'query': 'test0',
+        },
+        'testjoin': {
+            'id': 'testjoin',
+            'composite': True,
+            'build': {
+                'type': 'join',
+                'dataframes': ['test0', 'test5'],
+                'on': ['"address"."city_id"', '"city"."city_id"'],
+            }
         }
     },
     'components': {
         'table1': {
+            'id': 'table1',
+            'dataframe': 'test5',
+        },
+        'table2': {
+            'id': 'table2',
             'dataframe': 'test5',
         },
     }
