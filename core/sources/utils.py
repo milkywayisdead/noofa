@@ -1,4 +1,3 @@
-from inspect import Attribute
 from . import query
 
 
@@ -83,6 +82,7 @@ class Qbuilder:
         self._filters_list = query.get('filters', [])  # список фильтров в запросе
         self._values_list = query.get('values', [])  # список запрашиваемых полей
         self._limit = query.get('limit', None)  #  limit в запросе
+        self._orderings = query.get('order_by', [])  # упорядочивание
         try:
             int(self._limit)
         except:
@@ -129,7 +129,7 @@ class Qbuilder:
                 field_name = f['field']
                 table = self._tables[table_name]
                 table.has_field(field_name)
-                if table._enquote:
+                if table.enquote:
                     field_name = f'"{table_name}"."{field_name}"'
                 else:
                     field_name = f'{table_name}.{field_name}'
@@ -168,11 +168,46 @@ class Qbuilder:
         Возвращается объект запроса SelectQuery.
         """
         joins, filters = self.parse_joins(), self.parse_filters()
-        q = self._base_table.select().join(*joins).where(*filters)
+        values, orderings = self._parse_values(), self._parse_orderings()
+        q = self._base_table.select().join(*joins).where(*filters).values(*values)
+        q = q.order_by(*orderings)
         if self._limit is not None:
             q.limit(self._limit)
         return q
 
+    def _parse_values(self):
+        result = []
+        values_list = self._values_list
+        for v in values_list:
+            table = self._tables[v['table']]
+            field_name = v['field']
+            table.has_field(field_name)
+            if table.enquote:
+                value = f'"{table._name}"."{field_name}"'
+            else:
+                value = f'{table._name}.{field_name}'
+            result.append(value)
+        return result
+
+    def _parse_orderings(self):
+        result = []
+        for ordering in self._orderings:
+            table = self._tables[ordering['table']]
+            type_ = ordering['type'].upper()
+            fields = ordering['fields']
+            values = []
+            for field_name in fields:
+                table.has_field(field_name)
+                if table.enquote:
+                    value = f'"{table._name}"."{field_name}"'
+                else:
+                    value = f'{table._name}.{field_name}'
+                if type_ != 'DESC':
+                    type_ = 'ASC'
+                values.append(value)
+            result.append((values, type_))
+        return result
+            
 
 def collect_query_filters():
     return list(_FILTERS.keys())

@@ -65,21 +65,24 @@ jsq1 = {
             'is_subquery': True,
              'base': 'category',
              'tables': ['category'],
+             'values': [{'table': 'category', 'field': 'category_id'}],
         }},
         {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': 'in', 'value': {
             'is_subquery': True,
             'base': 'category',
             'tables': ['category'],
+            'values': [{'table': 'category', 'field': 'category_id'}],
             'filters': [
                 {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': 'in', 'value': {
                     'is_subquery': True,
                     'base': 'category',
                     'tables': ['category'],
+                    'values': [{'table': 'category', 'field': 'category_id'}],
                 }},
             ]
         }},
     ],
-    'values': [],
+    #'values': [{'table': 'category', 'field': 'last_update'}],
 }
 
 test_conf = {
@@ -107,12 +110,20 @@ test_conf = {
         'test1': {
             'id': 'test1',
             'source': 'test',
-            'query': jsq,
+            'query': {'base': 'actor', 'tables': ['actor'], 'order_by': [
+                {'table': 'actor', 'fields': ['last_name'], 'type': 'desc'},
+                #{'table': 'actor', 'fields': ['last_update'], 'type': 'desc'},
+            ]},
         },
         'test2': {
             'id': 'test2',
             'source': 'test',
             'query': jsq1,
+        },
+        'test3': {
+            'id': 'test3',
+            'source': 'mysql',
+            'query': {'base': 'titanic', 'tables': ['titanic'],},
         }
     },
     'dataframes': {
@@ -125,6 +136,16 @@ test_conf = {
             'id': 'test6',
             'source': 'test',
             'query': 'test2',
+        },
+        'test7': {
+            'id': 'test7',
+            'source': 'mysql',
+            'query': 'test3',
         }
     },
+    'components': {
+        'table1': {
+            'dataframe': 'test5',
+        },
+    }
 }

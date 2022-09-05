@@ -106,6 +106,7 @@ class PostgresSource(DatabaseSource):
 
     def close(self):
         self.connection.close()
+        self.connection = None
 
     def get_data(self, **kwargs):
         query = kwargs['query']
@@ -188,8 +189,9 @@ class MySqlSource(DatabaseSource):
 
     def close(self):
         self.connection.close()
+        self.connection = None
 
-    def get_data(self, query, **kwargs):
+    def get_data(self, **kwargs):
         query = kwargs['query']
         q, params = query.str_and_params()
         fields = query.requested
@@ -247,6 +249,7 @@ class RedisSource(DataSource):
 
     def close(self):
         self.connection.close()
+        self.connection = None
 
     def get_data(self, **kwargs):
         data = []
@@ -287,6 +290,7 @@ class JsonSource(DataSource):
 
     def close(self):
         self.connection.close()
+        self.connection = None
 
     def get_data(self, **kwargs):
         data = {}

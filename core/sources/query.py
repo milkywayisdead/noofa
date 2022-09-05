@@ -22,7 +22,7 @@ class Join:
     def __str__(self):
         right_name, left_name = self._right._name, self._left._name
         left_on, right_on = self._on[0], self._on[1]
-        if self._left._enquote or self._right._enquote:
+        if self._left.enquote or self._right.enquote:
             right_name, left_name = f'"{right_name}"', f'"{left_name}"'
             left_on, right_on = f'"{left_on}"', f'"{right_on}"'
         s = f'{self.__class__.join_type} JOIN {right_name} '
@@ -113,6 +113,7 @@ class SelectQuery:
                     self._values.append(f)
             else:
                 raise NoSuchFieldError(f)
+        return self
 
     def limit(self, n):
         try:
@@ -125,14 +126,16 @@ class SelectQuery:
 
     def order_by(self, *ords):
         for o in ords:
-            field, sorting = o[0], o[1].upper()
-            if field in self._fields:
-                assert sorting in ['ASC', 'DESC'], 'Значение должно быть равно ASC либо DESC'
-                ordby = f'{field} {sorting}'
-                if ordby not in self._order_by:
-                    self._order_by.append(ordby)
-            else:
-                raise NoSuchFieldError(field)
+            fields, sorting = o[0], o[1].upper()
+            for field in fields:
+                if field in self._fields:
+                    pass
+                else:
+                    raise NoSuchFieldError(field)
+            assert sorting in ['ASC', 'DESC'], 'Значение должно быть равно ASC либо DESC'
+            ordby = f'{", ".join(fields)} {sorting}'
+            if ordby not in self._order_by:
+                self._order_by.append(ordby)
         return self
 
     def _execute(self, cursor):
@@ -473,7 +476,7 @@ class Table:
     def __init__(self, name, fields, enquote=False):
         self._name = name
         self._fields_names = fields
-        self._enquote = enquote  # брать ли в кавычки названия таблицы и полей
+        self.enquote = enquote  # брать ли в кавычки названия таблицы и полей
 
         _columns, _fields = [], []
         for field in fields:
@@ -501,7 +504,7 @@ class Table:
         """
         Список полных названий полей (с названием таблице в префиксе).
         """
-        if self._enquote:
+        if self.enquote:
             verbose_names = [f'"{self._name}"."{field}"' for field in self._fields_names]
         else:    
             verbose_names = [f'{self._name}.{field}' for field in self._fields_names]

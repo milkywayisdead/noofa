@@ -87,6 +87,13 @@ class SchemaSource:
             return source.get_data(query=query)
         return source.get_data()
 
+    def __enter__(self):
+        self.open()
+        return self.connection
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.close()
+
 
 class SchemaQuery:
     """
@@ -97,14 +104,19 @@ class SchemaQuery:
         self._query_as_json = query_as_json
         self._source = source
 
-    def compile(self):
+    def execute(self):
+        with self._source as source:
+            query = self._compile()
+            print(query.str_and_params())
+            data = source.get_data(query=query)
+            return data
+
+    def _compile(self):
         """
         Создание объекта запроса (SelectQuery из noofa.core.conn.query).
         """
         query = self._query_as_json
         tables_list = collect_tables(query)
-        if not self._source.is_opened:
-            self._source.open()
         tables = {t: self._source.get_table(t) for t in tables_list}
         qbuilder = Qbuilder(tables, query)
         return qbuilder.parse_query()
@@ -118,11 +130,14 @@ class SchemaDataframe:
         self.id = id_
         self._source = source
         self._query = query
-        
-    def compile(self):
+
+    def get_data(self):
         if self._source.is_sql:
-            query = self._query.compile()
-            data = self._source.get_data(query=query)
+            data = self._query.execute()
         else:
             data = self._source.get_data()
+        return data
+        
+    def compile(self):
+        data = self.get_data()
         return DataFrame(data)
