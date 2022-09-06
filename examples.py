@@ -107,6 +107,11 @@ test_conf = {
         }
     },
     'queries': {
+        'film': {
+            'id': 'film',
+            'source': 'test',
+            'query': {'base': 'film', 'tables': ['film']},
+        },
         'test1': {
             'id': 'test1',
             'source': 'test',
@@ -135,6 +140,12 @@ test_conf = {
         }
     },
     'dataframes': {
+        'film': {
+            'id': 'film',
+            'source': 'test',
+            'query': 'film',
+            'composite': False,
+        },
         'test5': {
             'id': 'test5',
             'source': 'test',
@@ -192,3 +203,32 @@ test_conf = {
         },
     }
 }
+
+
+# пример описания фильтра для датафрейма в json
+panda_filter = [
+    {
+        'col_name': '"film"."film_id"',
+        'op': 'lt',
+        'value': 35,
+        'is_q': False,
+    },
+    {
+        'is_q': True,
+        'op': 'or',
+        'filters': [
+            {
+                'col_name': '"film"."film_id"',
+                'op': 'in',
+                'value': [33, 35],
+                'is_q': False,
+            },
+            {
+                'col_name': '"film"."film_id"',
+                'op': 'eq',
+                'value': 22,
+                'is_q': False,
+            },
+        ],
+    },
+]

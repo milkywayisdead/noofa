@@ -164,35 +164,7 @@ class PandaIn(PandaFilter):
         return self._df[self._panda_col].isin(self._value)
 
 
-# пример описания фильтра для датафрейма в json
-jsfilter = [
-    {
-        'col_name': 'film.film_id',
-        'op': 'lt',
-        'value': 35,
-        'is_q': False,
-    },
-    {
-        'is_q': True,
-        'op': 'or',
-        'filters': [
-            {
-                'col_name': 'film.film_id',
-                'op': 'in',
-                'value': [33, 35],
-                'is_q': False,
-            },
-            {
-                'col_name': 'film.film_id',
-                'op': 'eq',
-                'value': 22,
-                'is_q': False,
-            },
-        ],
-    },
-]
-
-_FILTERS = {
+PANDA_FILTERS = {
     'gt': PandaGt,
     'gte': PandaGte,
     'lt': PandaLt,
@@ -204,3 +176,32 @@ _FILTERS = {
     'endswith': PandaEndsWith,
     'in': PandaIn,
 }
+
+
+def _parse_filter(df, panda_jsf):
+    if panda_jsf['is_q'] == True:
+        filters = []
+        for f in panda_jsf['filters']:
+            filters.append(_parse_filter(df, f))
+        op = panda_jsf['op']
+        if op == 'or':
+            panda_filter = PandaQ()
+            for f in filters:
+                panda_filter |= PandaQ(f)
+        else:
+            panda_filter = PandaQ(*filters)
+        return panda_filter
+    else:
+        col, op, value = panda_jsf['col_name'], panda_jsf['op'], panda_jsf['value']
+        panda_filter = PANDA_FILTERS[op](col, value)
+        panda_filter.df(df)
+        return panda_filter
+
+def _parse_filters(df, panda_jsfilters):
+    """
+    Построение фильтра из json.
+    """
+    filters = []
+    for f in panda_jsfilters:
+        filters.append(_parse_filter(df, f))
+    return PandaQ(*filters)

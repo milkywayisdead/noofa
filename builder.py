@@ -67,6 +67,13 @@ class ReportBuilder:
         self._built_dataframes[df.id] = dataframe
         return dataframe
 
+    def df_to_dict(self, dataframe_id):
+        """
+        Датафрейм -> словарь.
+        """
+        df = self.build_dataframe(dataframe_id)
+        return df.to_dict(orient='records')
+
     def get_source(self, source_id):
         return self._dataschema.get_source(source_id)
 
