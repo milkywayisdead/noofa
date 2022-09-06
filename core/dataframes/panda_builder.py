@@ -28,7 +28,10 @@ def union(dataframes_list):
 
 
 def empty():
-    pass
+    """
+    Пустой датафрейм.
+    """
+    return DataFrame()
 
 
 def add_column():

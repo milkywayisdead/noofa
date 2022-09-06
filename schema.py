@@ -3,8 +3,7 @@
 """
 from pandas import DataFrame
 
-from .utils import get_source_class, collect_tables, Qbuilder, panda
-from .utils import panda
+from .utils import get_source_class, collect_tables, Qbuilder
 
 
 class DataSchema:
@@ -34,36 +33,30 @@ class DataSchema:
 
     def add_dataframe(self, **options):
         id_ = options['id']
-        is_composite = options.get('composite', False)
-        if is_composite:
-            dataframes = []
-            dataframes_list = options['build']['dataframes']
-            for df in dataframes_list:
-                dataframes.append(self._dataframes[df])
-            options['build']['dataframes'] = dataframes
-            options['source'] = None
-            options['query'] = None
-            self._dataframes[id_] = SchemaDataframe(id_, **options)
+        source = self._sources.get(options['source'], None)
+        query = options.get('query', None)
+        if source is None and query is None:
+            options['source'], options['query'] = None, None
+            self._dataframes[id_] = SchemaDataframe(**options)
+            return self
+        if not source.is_sql:
+            query = None
         else:
-            source = self._sources[options['source']]
-            if not source.is_sql:
-                query = None
-            else:
-                query = self._queries[options['query']]
-            self._dataframes[id_] = SchemaDataframe(id_, source, query)
+            if not query is None:
+                query = self._queries[query]
+        options['source'] = source
+        options['query'] = query
+        self._dataframes[id_] = SchemaDataframe(**options)
         return self     
 
-    def from_json(self, json_schema):
-        sources_schema = json_schema.get('sources', {})
-        queries = json_schema.get('queries', {})
-        dataframes = json_schema.get('dataframes', {})
-        for options in sources_schema.values():
-            self.add_source(**options)
-        for options in queries.values():
-            self.add_query(**options)
-        for options in dataframes.values():
-            self.add_dataframe(**options)
-        return self
+    def get_source(self, source_id):
+        return self._sources[source_id]
+
+    def get_query(self, query_id):
+        return self._queries[query_id]
+
+    def get_dataframe(self, df_id):
+        return self._dataframes[df_id]
 
 
 class SchemaSource:
@@ -137,18 +130,13 @@ class SchemaDataframe:
     """
     Датафрейм в схеме профиля.
     """
-    def __init__(self, id_, source, query=None, **options):
-        self.id = id_
-        self._source = source
-        self._query = query
+    def __init__(self, **options):
+        self.id = options['id']
+        self._source = options.get('source', None)
+        self._query = options.get('query', None)
         self.is_composite = options.get('composite', False)
-        self._build_type = None
-        self._dataframes = []
         if self.is_composite:
-            self._build_type = options['build']['type']
-            self._dataframes = options['build']['dataframes']
-            if self._build_type == 'join':
-                self._on = options['build']['on']
+            self._build = options['build']
 
     def get_data(self):
         if self._source.is_sql:
@@ -157,16 +145,10 @@ class SchemaDataframe:
             data = self._source.get_data()
         return data
         
-    def compile(self):
-        if self.is_composite:
-            build_type = self._build_type
-            if build_type == 'union':
-                dataframes = [df.compile() for df in self._dataframes]
-                return panda.union(dataframes)
-            elif build_type == 'join':
-                on = self._on
-                dataframes = [df.compile() for df in self._dataframes]
-                return panda.join(dataframes[0], dataframes[1], on)
-        else:
-            data = self.get_data()
+    def build(self):
+        data = self.get_data()
         return DataFrame(data)
+
+    @property
+    def build_options(self):
+        return self._build

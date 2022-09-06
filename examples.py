@@ -158,7 +158,7 @@ test_conf = {
             'composite': True,
             'build': {
                 'type': 'union',
-                'dataframes': [], #['test7', 'test6'],
+                'dataframes': ['test7', 'test6', 'test0'],
             },
             'source': None,
             'query': None,
@@ -172,6 +172,8 @@ test_conf = {
         'testjoin': {
             'id': 'testjoin',
             'composite': True,
+            'source': None,
+            'query': None,
             'build': {
                 'type': 'join',
                 'dataframes': ['test0', 'test5'],
