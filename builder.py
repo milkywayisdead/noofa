@@ -24,6 +24,18 @@ class ReportBuilder:
         for df in dataframes_config.values():
             self._dataschema.add_dataframe(**df)
 
+    def _add_all_to_context(self):
+        for k, df in self.dataframes.items():
+            self.interpreter.add_to_global(k, self.build_dataframe(k))
+
+    def apply(self, df_id, expr):
+        df = self.build_dataframe(df_id)
+        return self.interpreter.apply(df, expr)
+
+    @property
+    def dataframes(self):
+        return self._dataschema._dataframes
+
     def build_query(self, query_id):
         """
         Сформировать объект запроса.

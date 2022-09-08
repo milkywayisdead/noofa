@@ -1,4 +1,7 @@
+from pandas import Series
+
 from .base import Func, MandatoryArg
+from .errors import InterpreterContextError
 
 
 class Context:
@@ -50,7 +53,10 @@ class Context:
         try:
             return self._current_context[key]
         except KeyError:
-            return self.global_context[key]
+            try:
+                return self.global_context[key]
+            except KeyError:
+                raise InterpreterContextError(key)
 
     def remove(self, key):
         """
@@ -62,7 +68,7 @@ class Context:
 class GetFromContext(Func):
     """
     Функция получения значения из контекста интерпретатора.
-    Используется на уровне интерпретатора, во "внешний мир" не выводить.
+    Используется на уровне интерпретатора.
     """
     group = 'context'
     description = 'Функция контекста'
@@ -81,14 +87,14 @@ class GetFromContext(Func):
 
 class GetSlice(Func):
     """
-    Функция получения среза, столбца либо строки датафрейма.
-    Используется на уровне интерпретатора, во "внешний мир" не выводить.
+    Функция получения столбца датафрейма.
+    Используется на уровне интерпретатора.
     """
     group = 'context'
     description = 'Функция контекста'
     args_description = [
-        MandatoryArg('context', 0),
-        MandatoryArg('var', 1),
+        MandatoryArg('obj', 0),
+        MandatoryArg('col', 1),
     ]
 
     @classmethod
@@ -96,8 +102,13 @@ class GetSlice(Func):
         return '_getslice'
 
     def _operation(self, *args):
-        df, slice_ = args[0], args[1]
-        return df[slice_]
+        obj, key = args[0], args[1]
+        result = obj[key]
+        if isinstance(result, Series):
+            result = result.to_list()
+        if isinstance(obj, Series):
+            result = result[0]
+        return result
 
 
 _context_funcs = {

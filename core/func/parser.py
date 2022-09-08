@@ -250,7 +250,7 @@ class OperatorRule(Rule):
             else:
                 if token in ('!', '='):
                     raise ExpressionParsingError(f'Неожиданный токен после "{token}": {c}')
-                return token, False
+                return token, True
         return token, True
 
     @property
