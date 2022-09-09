@@ -39,11 +39,15 @@ class Interpreter:
 
     def apply(self, df, expr):
         result = []
-        rows = df.iterrows()
+        rows = df.to_dict(orient='records')
         self._context.switch_to_local()
-        for i, row in rows:
-            self.add_to_local('row', row)
+        key = 'row'
+        for idx, row in enumerate(rows):
+            self.add_to_local(key, row)
+            self.add_to_local('idx', idx)
             result.append(self.evaluate(expr))
+        self._context.remove(key)
+        self._context.remove('idx')
         self._context.switch_to_global()
         return result
 

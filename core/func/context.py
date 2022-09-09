@@ -103,7 +103,10 @@ class GetSlice(Func):
 
     def _operation(self, *args):
         obj, key = args[0], args[1]
-        result = obj[key]
+        if isinstance(obj, dict):
+            result = obj[key[0]]
+        else:
+            result = obj[key]
         if isinstance(result, Series):
             result = result.to_list()
         if isinstance(obj, Series):

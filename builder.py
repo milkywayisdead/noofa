@@ -1,3 +1,4 @@
+from .core.func.errors import InterpreterContextError
 from .schema import DataSchema
 from .components import ComponentsSchema
 from .utils import Interpreter, panda_builder
@@ -24,9 +25,13 @@ class ReportBuilder:
         for df in dataframes_config.values():
             self._dataschema.add_dataframe(**df)
 
-    def _add_all_to_context(self):
-        for k, df in self.dataframes.items():
-            self.interpreter.add_to_global(k, self.build_dataframe(k))
+    def evaluate(self, expr):
+        try: 
+            return self.interpreter.evaluate(expr)
+        except InterpreterContextError as e:
+            df = self.build_dataframe(e.key)
+            self.interpreter.add_to_global(e.key, df)
+            return self.evaluate(expr)
 
     def apply(self, df_id, expr):
         df = self.build_dataframe(df_id)
@@ -49,6 +54,8 @@ class ReportBuilder:
         return query
 
     def get_data(self, query_id):
+        if query_id in self._results:
+            return self._results[query_id]
         query = self.get_query(query_id)
         data = query.execute()
         self._results[query.id] = data
