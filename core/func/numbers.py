@@ -197,28 +197,6 @@ class Log(MathFunc):
         return math.log(args[0], args[1])
 
 
-class Min(MathFunc):
-    """
-    Минимальное число в наборе.
-    """
-    description = 'Выбор наименьшего числа в наборе'
-    operation = min
-    args_description = [
-        MandatoryArg('Набор чисел', 0),
-    ]
-
-
-class Max(MathFunc):
-    """
-    Максимальное число в наборе.
-    """
-    description = 'Выбор наибольшего числа в наборе'
-    operation = max
-    args_description = [
-        MandatoryArg('Набор чисел', 0),
-    ]
-
-
 class Pow(MathFunc):
     """
     Возведение x в степень y.

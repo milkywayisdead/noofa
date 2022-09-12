@@ -102,39 +102,15 @@ class GetSlice(Func):
         return '_getslice'
 
     def _operation(self, *args):
-        obj, key = args[0], args[1]
+        args = list(args)
+        obj, key = args.pop(0), args[0]
         if isinstance(obj, dict):
             result = obj[key[0]]
         else:
-            result = obj[key]
-        if isinstance(result, Series):
-            result = result.to_list()
-        if isinstance(obj, Series):
-            result = result[0]
-        return result
-
-
-class Execute(Func):
-    """
-    Функция выполнения запроса.
-    """
-    group = 'context'
-    description = 'Функция контекста'
-    args_description = [
-        MandatoryArg('Контекст', 0),
-        MandatoryArg('Название запроса', 1),
-    ]
-
-    @classmethod
-    def get_name(cls):
-        return 'execute'
-
-    def _operation(self, *args):
-        obj, key = args[0], args[1]
-        if isinstance(obj, dict):
-            result = obj[key[0]]
-        else:
-            result = obj[key]
+            if len(args) > 1:
+                result = obj[[args]]
+            else:
+                result = obj[key]
         if isinstance(result, Series):
             result = result.to_list()
         if isinstance(obj, Series):

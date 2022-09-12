@@ -88,7 +88,7 @@ jsq1 = {
 # пример описания фильтра для датафрейма в json
 panda_filter = [
     {
-        'col_name': '"city"."city_id"',
+        'col_name': 'city.city_id',
         'op': 'gt',
         'value': 12,
         'is_q': False,
@@ -98,13 +98,13 @@ panda_filter = [
         'op': 'or',
         'filters': [
             {
-                'col_name': '"address"."city_id"',
+                'col_name': 'address.city_id',
                 'op': 'in',
                 'value': [33, 35],
                 'is_q': False,
             },
             {
-                'col_name': '"city"."city_id"',
+                'col_name': 'city.city_id',
                 'op': 'eq',
                 'value': 22,
                 'is_q': False,
@@ -216,13 +216,23 @@ test_conf = {
             'build': {
                 'type': 'join',
                 'dataframes': ['test0', 'test5'],
-                'on': ['"address"."city_id"', '"city"."city_id"'],
+                'on': ['address.city_id', 'city.city_id'],
             },
             'filters': panda_filter,
             'ordering': {
                 'asc': True,
-                'cols': ['"city"."city_id"'],
+                'cols': ['city.city_id'],
             },
-        }
+            'columns': [
+                {
+                    'name': 'test111',
+                    'value': '11',
+                },
+                {
+                    'name': 'test1112',
+                    'value': 'row["city.city_id"] * 99',
+                },
+            ],
+        },
     },
 }

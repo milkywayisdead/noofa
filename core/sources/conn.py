@@ -121,7 +121,7 @@ class PostgresSource(DatabaseSource):
                 cursor.execute(q)
 
             _data = cursor.fetchall()
-            desc = fields 
+            desc = [f.replace('"', "") for f in fields]
             for d in _data:
                 datapiece = {}
                 for n, i in enumerate(d):

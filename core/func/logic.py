@@ -11,6 +11,10 @@ class BoolTrue(LogicFunc):
     """
     description = 'Функция, возвращающая True'
 
+    @classmethod
+    def get_name(cls):
+        return 'true'
+
     def _operation(self, *args):
         return True
 
@@ -20,6 +24,10 @@ class BoolFalse(LogicFunc):
     Функция, возвращающая логическое False.
     """
     description = 'Функция, возвращающая False'
+
+    @classmethod
+    def get_name(cls):
+        return 'false'
 
     def _operation(self, *args):
         return False

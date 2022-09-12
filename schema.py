@@ -139,6 +139,7 @@ class SchemaDataframe:
             self._build = options['build']
         self.filters = options.get('filters', [])
         self.ordering = options.get('ordering', None)
+        self.cols = options.get('columns', [])
 
     def get_data(self):
         if self._source.is_sql:

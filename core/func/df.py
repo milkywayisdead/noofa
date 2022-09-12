@@ -11,6 +11,10 @@ class Build(DataframeFunc):
         MandatoryArg('Данные', 1),
     ]
 
+    @classmethod
+    def get_name(cls):
+        return 'df_build'
+
     def _operation(self, *args):
         return panda_builder.DataFrame(args[0])
 
@@ -61,6 +65,10 @@ class Order(DataframeFunc):
         NonMandatoryArg('Направление', 2),
     ]
 
+    @classmethod
+    def get_name(cls):
+        return 'df_order'
+
     def _operation(self, *args):
         asc = True
         try:
@@ -82,6 +90,10 @@ class DfFilter(DataframeFunc):
         MandatoryArg('Значение', 3),
     ]
 
+    @classmethod
+    def get_name(cls):
+        return 'df_filter'
+
     def _operation(self, *args):
         df, filter_type = args[0], args[2]
         col_name, value = args[1], args[3]
@@ -100,6 +112,10 @@ class QDfFilter(DataframeFunc):
         MandatoryArg('Простой фильтр', 0),
     ]
 
+    @classmethod
+    def get_name(cls):
+        return 'df_cfilter'
+
     def _operation(self, *args):
         return panda_builder.filters.PandaQ(*args)
 
@@ -114,14 +130,61 @@ class Filter(DataframeFunc):
         MandatoryArg('Фильтр', 1),
     ]
 
+    @classmethod
+    def get_name(cls):
+        return 'filter'
+
     def _operation(self, *args):
-        print(args[1])
         return panda_builder.lazy_filter(args[0], args[1])
 
 
 class AddColumn(DataframeFunc):
-    pass
+    """
+    Функция добавления/изменения столбцов датафреймов.
+    """
+    description = 'Функция добавления/изменения столбцов датафреймов'
+    args_description = [
+        MandatoryArg('Датафрейм', 0),
+        MandatoryArg('Название столбца', 1),
+        MandatoryArg('Значения', 2),
+    ]
+
+    @classmethod
+    def get_name(cls):
+        return 'add_column'
+
+    def _operation(self, *args):
+        df, col_name, values = args[0], args[1], args[2]
+        return panda_builder.add_column(df, col_name, values)
 
 
-class CalcColumn(DataframeFunc):
+class Head(DataframeFunc):
+    """
+    Функция получения n первых строк датафрейма.
+    """
+    description = 'Функция получения n первых строк датафрейма'
+    args_description = [
+        MandatoryArg('Датафрейм', 0),
+        MandatoryArg('Количество строк', 1),
+    ]
+
+    def _operation(self, *args):
+        return args[0].head(args[1])
+
+
+class Tail(DataframeFunc):
+    """
+    Функция получения n последних строк датафрейма.
+    """
+    description = 'Функция получения n последних строк датафрейма'
+    args_description = [
+        MandatoryArg('Датафрейм', 0),
+        MandatoryArg('Количество строк', 1),
+    ]
+
+    def _operation(self, *args):
+        return args[0].tail(args[1])
+
+
+class GroupBy(DataframeFunc):
     pass

@@ -19,6 +19,7 @@ def _collect_functions():
         datastruct,
         typeconv,
         df,
+        statistics,
     )
     
     fmodules = (
@@ -29,6 +30,7 @@ def _collect_functions():
         datastruct,
         typeconv,
         df,
+        statistics,
     )
     for fmod in fmodules:
         for f in dir(fmod):

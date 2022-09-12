@@ -134,6 +134,13 @@ class SqlFunc(Func):
     group = 'sql'
 
 
+class StatisticsFunc(Func):
+    """
+    Статистические функции.
+    """
+    group = 'statistics'
+
+
 class NonMandatoryArg:
     """
     Необязательный аргумент функции.

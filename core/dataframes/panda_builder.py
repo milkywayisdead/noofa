@@ -1,7 +1,7 @@
 """
 Для работы с датафреймами.
 """
-from pandas import merge, concat, DataFrame
+import pandas as pd
 
 from . import filters
 
@@ -10,7 +10,7 @@ def join(df1, df2, on, how='inner'):
     """
     Соединение датафреймов.
     """
-    result_df = merge(
+    result_df = pd.merge(
         df1, df2, 
         left_on=on[0], right_on=on[1],
         how=how,
@@ -23,9 +23,9 @@ def union(dataframes_list):
     Склеивание датафреймов из списка.
     dataframes_list - список датафреймов pandas.
     """
-    result = DataFrame()
+    result = pd.DataFrame()
     for df in dataframes_list:
-        result = concat([result, df], ignore_index=True)
+        result = pd.concat([result, df], ignore_index=True)
     return result
 
 
@@ -33,7 +33,7 @@ def empty():
     """
     Пустой датафрейм.
     """
-    return DataFrame()
+    return pd.DataFrame()
 
 
 def add_column(df, col_name, col_data):
