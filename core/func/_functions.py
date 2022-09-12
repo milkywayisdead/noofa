@@ -18,6 +18,7 @@ def _collect_functions():
         logic,
         datastruct,
         typeconv,
+        df,
     )
     
     fmodules = (
@@ -27,6 +28,7 @@ def _collect_functions():
         logic,
         datastruct,
         typeconv,
+        df,
     )
     for fmod in fmodules:
         for f in dir(fmod):

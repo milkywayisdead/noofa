@@ -83,6 +83,10 @@ class ReportBuilder:
                 dataframes = build_options['dataframes']
                 dataframes = [self.build_dataframe(df) for df in dataframes]
                 dataframe = panda_builder.union(dataframes)
+        if df.filters:
+            dataframe = panda_builder.filter(dataframe, df.filters)
+        if df.ordering:
+            dataframe = panda_builder.order_by(dataframe, df.ordering['cols'], asc=df.ordering['asc'])
         self._built_dataframes[df.id] = dataframe
         return dataframe
 

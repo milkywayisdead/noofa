@@ -137,6 +137,8 @@ class SchemaDataframe:
         self.is_composite = options.get('composite', False)
         if self.is_composite:
             self._build = options['build']
+        self.filters = options.get('filters', [])
+        self.ordering = options.get('ordering', None)
 
     def get_data(self):
         if self._source.is_sql:

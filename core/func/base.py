@@ -120,6 +120,20 @@ class Operator(Func):
         return self.__class__.sign
 
 
+class DataframeFunc(Func):
+    """
+    Функции для работы с датафреймами.
+    """
+    group = 'dataframe'
+
+
+class SqlFunc(Func):
+    """
+    Функции select-запросов.
+    """
+    group = 'sql'
+
+
 class NonMandatoryArg:
     """
     Необязательный аргумент функции.

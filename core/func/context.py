@@ -114,6 +114,34 @@ class GetSlice(Func):
         return result
 
 
+class Execute(Func):
+    """
+    Функция выполнения запроса.
+    """
+    group = 'context'
+    description = 'Функция контекста'
+    args_description = [
+        MandatoryArg('Контекст', 0),
+        MandatoryArg('Название запроса', 1),
+    ]
+
+    @classmethod
+    def get_name(cls):
+        return 'execute'
+
+    def _operation(self, *args):
+        obj, key = args[0], args[1]
+        if isinstance(obj, dict):
+            result = obj[key[0]]
+        else:
+            result = obj[key]
+        if isinstance(result, Series):
+            result = result.to_list()
+        if isinstance(obj, Series):
+            result = result[0]
+        return result
+
+
 _context_funcs = {
     GetFromContext.get_name(): GetFromContext,
     GetSlice.get_name(): GetSlice,

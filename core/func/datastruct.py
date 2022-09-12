@@ -17,4 +17,4 @@ class List(DatastructFunc):
     ]
 
     def _operation(self, *args):
-        return [arg for arg in args] 
+        return [arg for arg in args]

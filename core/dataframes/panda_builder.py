@@ -3,7 +3,7 @@
 """
 from pandas import merge, concat, DataFrame
 
-from .filters import _parse_filters
+from . import filters
 
 
 def join(df1, df2, on, how='inner'):
@@ -67,7 +67,7 @@ def filter(df, panda_jsfilters):
     """
     Фильтрация строк датафрейма.
     """
-    panda_filter = _parse_filters(df, panda_jsfilters)
+    panda_filter = filters._parse_filters(df, panda_jsfilters)
     return df[panda_filter.filter]
 
 
@@ -79,3 +79,13 @@ def order_by(df, by, **kwargs):
     if asc not in [True, False]:
         asc = True
     return df.sort_values(by=by, ascending=asc)
+
+
+def get_filter(filter_type):
+    return filters.PANDA_FILTERS[filter_type]
+
+
+def lazy_filter(df, pf):
+    if isinstance(pf, filters.PandaQ):
+        return df[pf.filter]
+    return df[pf]
