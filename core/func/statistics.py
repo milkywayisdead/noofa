@@ -1,3 +1,5 @@
+import statistics
+
 from .base import StatisticsFunc, MandatoryArg, NonMandatoryArg
 from ..dataframes.panda_builder import pd
 
@@ -14,8 +16,10 @@ class Mean(StatisticsFunc):
     def _operation(self, *args):
         seq = args[0]
         if isinstance(seq, list):
-            seq = pd.Series(seq)
-        return float(seq.mean())
+            mv = statistics.mean(seq)
+        else:
+            mv = seq.mean()
+        return float(mv)
 
 
 class Median(StatisticsFunc):
@@ -30,8 +34,10 @@ class Median(StatisticsFunc):
     def _operation(self, *args):
         seq = args[0]
         if isinstance(seq, list):
-            seq = pd.Series(seq)
-        return float(seq.median())
+            med = statistics.median(seq)
+        else:
+            med = seq.median()
+        return float(med)
 
 
 class Mode(StatisticsFunc):
@@ -46,8 +52,10 @@ class Mode(StatisticsFunc):
     def _operation(self, *args):
         seq = args[0]
         if isinstance(seq, list):
-            seq = pd.Series(seq)
-        return float(seq.mode().loc(0)[0])
+            m = statistics.mode(seq)
+        else:
+            m = seq.mode().loc(0)[0]
+        return float(m)
 
 
 class Min(StatisticsFunc):
@@ -62,7 +70,7 @@ class Min(StatisticsFunc):
     def _operation(self, *args):
         seq = args[0]
         if isinstance(seq, list):
-            seq = pd.Series(seq)
+            return statistics.min(seq)
         return float(seq.min())
 
 
@@ -78,7 +86,7 @@ class Max(StatisticsFunc):
     def _operation(self, *args):
         seq = args[0]
         if isinstance(seq, list):
-            seq = pd.Series(seq)
+            return statistics.max(seq)
         return float(seq.max())
 
 
@@ -101,3 +109,24 @@ class Stdev(StatisticsFunc):
         if isinstance(seq, list):
             seq = pd.Series(seq)
         return float(seq.std(ddof=ddof))
+
+
+class Variance(StatisticsFunc):
+    """
+    Дисперсия.
+    """
+    description = 'Функция вычисления дисперсии'
+    args_description = [
+        MandatoryArg('Последовательность значений', 0),
+        NonMandatoryArg('Отклонение для выборки/совокупности', 1),
+    ]
+
+    def _operation(self, *args):
+        seq = args[0]
+        try:
+            ddof = args[1]
+        except IndexError:
+            ddof = 1
+        if isinstance(seq, list):
+            seq = pd.Series(seq)
+        return float(seq.var(ddof=ddof))

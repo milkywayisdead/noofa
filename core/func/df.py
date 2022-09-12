@@ -184,7 +184,3 @@ class Tail(DataframeFunc):
 
     def _operation(self, *args):
         return args[0].tail(args[1])
-
-
-class GroupBy(DataframeFunc):
-    pass
