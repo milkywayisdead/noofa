@@ -16,6 +16,9 @@ class DataSchema:
         self._dataframes = kwargs.get('dataframes', {})
 
     def add_source(self, **options):
+        """
+        Добавление источника в схему.
+        """
         id_ = options.pop('id')
         type_ = options.pop('type')
         source_cls = get_source_class(type_)
@@ -24,6 +27,9 @@ class DataSchema:
         return self
 
     def add_query(self, **options):
+        """
+        Добавление запроса в схему.
+        """
         id_ = options['id']
         source_name = options['source']
         source = self._sources[source_name]
@@ -32,6 +38,9 @@ class DataSchema:
         return self
 
     def add_dataframe(self, **options):
+        """
+        Добавление датафрейма в схему.
+        """
         id_ = options['id']
         source = self._sources.get(options['source'], None)
         query = options.get('query', None)
@@ -69,9 +78,15 @@ class SchemaSource:
 
     @property
     def is_opened(self):
+        """
+        Открыт ли источник (есть ли подключение).
+        """
         return self.connection.connection is not None
 
     def open(self):
+        """
+        Открыть источник (соединение).
+        """
         if not self.is_opened:
             self.connection.open()
 
@@ -79,6 +94,9 @@ class SchemaSource:
         self.connection.close()
 
     def get_table(self, table_name):
+        """
+        Построение объекта таблицы по имени.
+        """
         return self.connection.get_table(table_name)
 
     @property

@@ -32,6 +32,10 @@ class ReportTable:
             self._data = data
         return data
 
+    def _exclude(self):
+        _excl = self.columns.get('exclude', [])
+        pass
+
     def update(self):
         data = self._dataframe.get_data()
         self._data = data
@@ -44,4 +48,15 @@ class ReportTable:
 
 
 class ReportChart:
-    pass
+    def __init__(self, **options):
+        self.id = options['id']
+        self._type = options.get('type', 'plotly')
+
+    def add_dataset(self, dataset):
+        pass
+
+
+class DynamicFilter:
+    def __init__(self, **options):
+        self.id = options['id']
+        self._widget = options['widget']
