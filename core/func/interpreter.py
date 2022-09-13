@@ -21,6 +21,7 @@ class Interpreter:
         self._functions_dict.update(_context_funcs)
         self._operators_dict = _operators_dict
         self._context = Context(**context)
+        self._connections = {}
 
     def evaluate(self, expression):
         """
@@ -143,7 +144,9 @@ class Interpreter:
             if _func is None:
                 return args[0]
             else:
-                func = self._get_function(_func['value'])              
+                func = self._get_function(_func['value'])
+                if _func['value'] == 'connection':
+                    return func(self._connections, *args)              
             return func(*args)
 
     def _get_function(self, name):

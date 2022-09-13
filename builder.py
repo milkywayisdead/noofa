@@ -12,6 +12,7 @@ class ReportBuilder:
         self._dataschema = DataSchema()  # схема данных
         self._components_schema = ComponentsSchema()  # схема компонентов
         self.interpreter = Interpreter()  # интерпретатор для вычисления формул
+        self.interpreter._connections = self._dataschema._sources
         self._compiled_queries = {}  #  сформированные запросы
         self._built_dataframes = {}  #  сформированные датафреймы
         self._results = {}  #  результаты запросов (полученные данные)

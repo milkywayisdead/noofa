@@ -20,6 +20,7 @@ def _collect_functions():
         typeconv,
         df,
         statistics,
+        sql,
     )
     
     fmodules = (
@@ -31,6 +32,7 @@ def _collect_functions():
         typeconv,
         df,
         statistics,
+        sql,
     )
     for fmod in fmodules:
         for f in dir(fmod):
