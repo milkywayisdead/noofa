@@ -27,23 +27,37 @@ class SqlSelect(SqlFunc):
             'joins': [],
             'filters': [],
             'values': [],
+            'order_by': [],
         }
         try:
-            for j in args[1]:
-                j = j.q_part
-                tables = [j['l'], j['r']]
-                for table in tables:
-                    if not table in jsq['tables']:
+            joins = args[1]
+            if isinstance(joins, list):
+                for j in joins:
+                    j = j.q_part
+                    tables = [j['l'], j['r']]
+                    for table in tables:
                         jsq['tables'].append(table)
+                    jsq['joins'].append(j)
+            else:
+                j = joins.q_part
                 jsq['joins'].append(j)
+                jsq['tables'] += [j['l'], j['r']]
         except IndexError:
             pass
         try:
-            jsq['filters'] = [f.q_part for f in args[2]]
+            filters_ = args[2]
+            if isinstance(filters_, list):
+                jsq['filters'] = [f.q_part for f in args[2]]
+            else:
+                jsq['filters'].append(filters_.q_part)
         except IndexError:
             pass
         try:
-            jsq['order_by'] = [o.q_part for o in args[3]]
+            orderings = args[3]
+            if isinstance(orderings, list):
+                jsq['order_by'] = [o.q_part for o in orderings]
+            else:
+                jsq['order_by'].append(orderings.q_part)
         except IndexError:
             pass
         try:
@@ -58,7 +72,7 @@ class SqlSelect(SqlFunc):
             pass
         else:
             jsq['limit'] = n
-        print(jsq)
+        jsq['tables'] = list(set(jsq['tables']))
         return SqlDict(jsq)
 
 
@@ -124,7 +138,28 @@ class SqlWhere(SqlFunc):
 
 
 class SqlOrderBy(SqlFunc):
-    pass
+    """
+    Функция создания фильтров where запросе.
+    """
+    description = 'Функция создания фильтров where запросе'
+    args_description = [
+        MandatoryArg('Название таблицы', 0),
+        MandatoryArg('Название поля', 1),
+        MandatoryArg('Направление', 2),
+    ]
+
+    @classmethod
+    def get_name(self):
+        return 'sql_orderby'
+
+    def _operation(self, *args):
+        table_name, fields = args[1], args[2:]
+        ordering = args[0]
+        return SqlDict({
+            'table': table_name,
+            'fields': fields,
+            'type': ordering,
+        })
 
 
 class SqlDict:
