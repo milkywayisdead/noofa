@@ -184,3 +184,20 @@ class Tail(DataframeFunc):
 
     def _operation(self, *args):
         return args[0].tail(args[1])
+
+
+class CreateDataframe(DataframeFunc):
+    """
+    Функция создания датафрейма.
+    """
+    description = 'Функция создания датафреймов'
+    args_description = [
+        MandatoryArg('Данные', 0),
+    ]
+
+    @classmethod
+    def get_name(cls):
+        return 'dataframe'
+
+    def _operation(self, *args):
+        return panda_builder.new(args[0])

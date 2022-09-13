@@ -6,6 +6,9 @@ import pandas as pd
 from . import filters
 
 
+def new(data):
+    return pd.DataFrame(data)
+
 def join(df1, df2, on, how='inner'):
     """
     Соединение датафреймов.
