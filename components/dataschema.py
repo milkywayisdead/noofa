@@ -3,7 +3,7 @@
 """
 from pandas import DataFrame
 
-from .utils import get_source_class, collect_tables, Qbuilder
+from ..utils import get_source_class, collect_tables, Qbuilder
 
 
 class DataSchema:

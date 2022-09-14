@@ -22,7 +22,7 @@ class ReportTable:
     """
     def __init__(self, **options):
         self.id = options['id']
-        self._dataframe = options['dataframe']
+        self._dataframe = options['dataframe_id']
         self.columns = options.get('columns', {})
         self.aliases = options.get('aliases', {})
         self._data = None

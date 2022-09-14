@@ -69,7 +69,6 @@ class PandaQ:
             self_f = self.filter
             if f is not None:
                 if self_f is not None:
-                    print(self._filter, f.filter)
                     self._filter = self.filter | f
                     return self
                 else:

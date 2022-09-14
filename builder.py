@@ -1,7 +1,8 @@
 from .core.func.errors import InterpreterContextError
-from .schema import DataSchema
-from .components import ComponentsSchema
-from .utils import Interpreter, panda_builder
+from .core.func import Interpreter
+from .components.dataschema import DataSchema
+from .components.components import ComponentsSchema
+from .core.dataframes import panda_builder
 
 
 class ReportBuilder:
