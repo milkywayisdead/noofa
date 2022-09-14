@@ -245,6 +245,10 @@ class RedisSource(DataSource):
         self.connection = None
 
     def get_connection(self, **kwargs):
+        if self._conn_str:
+            conn_dict = _parse_conn_str(self._conn_str)
+            conn_dict['db'] = conn_dict.pop('database')
+            return redis.Redis(**conn_dict)
         conn = redis.Redis(
             host=self._host,
             port=self._port,
