@@ -243,8 +243,6 @@ class OperatorRule(Rule):
             return True
 
     def scan(self, token_stream, token):
-        if token in ('&', '|'):
-            return token, True
         if token in ('>', '<', '!', '='):
             c = token_stream.get_next()
             if c == '=':
