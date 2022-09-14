@@ -2,6 +2,7 @@
 Операторы.
 """
 from .base import Operator, MandatoryArg
+from ..dataframes import panda_builder
 
 
 _OPERATORS_PRIORITY = {
@@ -15,6 +16,8 @@ _OPERATORS_PRIORITY = {
     '<=': 3,
     '!=': 4,
     '==': 4,
+    '&': 5,
+    '|': 6,
 }
 
 
@@ -31,6 +34,8 @@ class Add(Operator):
 
     def _operation(self, *args):
         left, right = args
+        if isinstance(left, panda_builder.pd.DataFrame) and isinstance(right, panda_builder.pd.DataFrame):
+            return panda_builder.union([left, right])
         if left is None and type(right) is not str:
             return right
         return left + right
@@ -187,3 +192,35 @@ class IsNeq(Operator):
 
     def _operation(self, *args):
         return args[0] != args[1]
+
+
+class Or(Operator):
+    """
+    Логическое ИЛИ
+    """
+    sign = '|'
+    description = 'Логическое ИЛИ'
+    args_description = [
+        MandatoryArg('Значение1', 0),
+        MandatoryArg('Значение2', 1),
+    ]
+
+    def _operation(self, *args):
+        left, right = args
+        return left | right
+
+
+class And(Operator):
+    """
+    Логическое И
+    """
+    sign = '&'
+    description = 'Логическое И'
+    args_description = [
+        MandatoryArg('Значение1', 0),
+        MandatoryArg('Значение2', 1),
+    ]
+
+    def _operation(self, *args):
+        left, right = args
+        return left & right
