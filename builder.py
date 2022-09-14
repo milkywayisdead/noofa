@@ -1,3 +1,7 @@
+"""
+Инструмент построения отчётов.
+"""
+
 from .core.func.errors import InterpreterContextError
 from .core.func import Interpreter
 from .components.dataschema import DataSchema

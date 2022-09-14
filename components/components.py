@@ -1,3 +1,8 @@
+"""
+Классы графических компонентов отчёта.
+"""
+
+
 class ComponentsSchema:
     """
     Схема компонентов отчёта.
@@ -16,12 +21,18 @@ class ComponentsSchema:
             self._tables[id_] = ReportTable(**table)
 
 
-class ReportTable:
+class ReportComponent:
+    def __init__(self, **options):
+        self.id = options['id']
+        self.type = options['type']  # chart, table, filter
+
+
+class ReportTable(ReportComponent):
     """
     Таблица в компонентах отчёта.
     """
     def __init__(self, **options):
-        self.id = options['id']
+        super().__init__(**options)
         self._dataframe = options['dataframe_id']
         self.columns = options.get('columns', {})
         self.aliases = options.get('aliases', {})
@@ -32,10 +43,6 @@ class ReportTable:
             data = self._dataframe.get_data()
             self._data = data
         return data
-
-    def _exclude(self):
-        _excl = self.columns.get('exclude', [])
-        pass
 
     def update(self):
         data = self._dataframe.get_data()
@@ -48,16 +55,9 @@ class ReportTable:
         pass
 
 
-class ReportChart:
+class ReportChart(ReportComponent):
     def __init__(self, **options):
-        self.id = options['id']
-        self._type = options.get('type', 'plotly')
+        super().__init__(**options)
 
     def add_dataset(self, dataset):
         pass
-
-
-class DynamicFilter:
-    def __init__(self, **options):
-        self.id = options['id']
-        self._widget = options['widget']

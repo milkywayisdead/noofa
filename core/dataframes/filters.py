@@ -20,6 +20,11 @@ class PandaFilter(ABC):
     def __or__(self, panda_filter):
         return self.filter | panda_filter.filter
 
+    @property
+    def df(self):
+        return self._df
+
+    @df.setter
     def df(self, df):
         self._df = df
 
@@ -202,7 +207,7 @@ def _parse_filter(df, panda_jsf):
     else:
         col, op, value = panda_jsf['col_name'], panda_jsf['op'], panda_jsf['value']
         panda_filter = PANDA_FILTERS[op](col, value)
-        panda_filter.df(df)
+        panda_filter.df = df
         return PandaQ(panda_filter)
 
 def _parse_filters(df, panda_jsfilters):

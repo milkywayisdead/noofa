@@ -122,26 +122,6 @@ class DfFilter(DataframeFunc):
             'op': args[1],
             'value': args[2],
         })
-        """df, filter_type = args[0], args[2]
-        col_name, value = args[1], args[3]
-        pf = panda_builder.get_filter(filter_type)
-        pf = pf(col_name, value)
-        pf.df(df)
-        return pf"""
-
-
-"""class QDfFilter(DataframeFunc):
-    description = 'Функция создания составных фильтров для датафреймов'
-    args_description = [
-        MandatoryArg('Простой фильтр', 0),
-    ]
-
-    @classmethod
-    def get_name(cls):
-        return 'df_cfilter'
-
-    def _operation(self, *args):
-        return panda_builder.filters.PandaQ(*args)"""
 
 
 class Filter(DataframeFunc):

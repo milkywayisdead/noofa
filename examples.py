@@ -1,6 +1,9 @@
 """
-Конфигурация профиля
+Примеры json-объектов для построения различных объектов.
+"""
 
+"""
+Конфигурация отчёта.
 {
     # словарь с источниками
     sources: {
@@ -31,25 +34,78 @@
 }
 """
 
-# пример запроса
+# пример запроса в виде json
 jsq = {
-    'base': 'category',
+    # базовая таблица
+    'base': 'category',  
+
+    # таблицы, используемые в запросе
     'tables': ['category', 'film_category'],
+
+    # соединения таблиц  
     'joins': [
-        {'l': 'category', 'r': 'film_category', 'j': 'inner', 'on': {'l': 'category_id', 'r': 'category_id'}},
+        {
+            #  левая таблица в соединении
+            'l': 'category',  # для первого соединения базовая таблица должна указываться левой
+            #  правая таблицы
+            'r': 'film_category', 
+            #  тип соединения
+            'j': 'inner', 
+            # по каким полям соединять
+            'on': {
+                'l': 'category_id',  # поле левой таблицы
+                'r': 'category_id'  # поле правой таблицы
+            }
+        },
     ],
+
+    # фильтры where
     'filters': [
-        {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': '==', 'value': 5},
-        {'is_complex': True, 'op': 'OR', 'filters': [
-            {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': '>', 'value': 5},
-            {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': '<', 'value': 100},
-            {'is_complex': True, 'op': 'AND', 'filters': [
-                {'is_complex': False, 'table': 'film_category', 'field': 'category_id', 'op': '>', 'value': 8},
-                {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': '<', 'value': 10},
-            ]}
-        ]},
+        # если в этом списке несколько фильтров, то они будут объединены через AND
+
+        #  простой фильтр (не состоящий из нескольких условий)
+        {
+            'is_complex': False, # составной ли фильтр
+            'table': 'category', # таблица
+            'field': 'category_id',  # поле 
+            'op': '==', # оператор
+            'value': 5, # значение 
+        },
+
+        # составной фильтр
+        {
+            'is_complex': True,  # это составной фильтр, т.е. в него входят несколько условий
+            'op': 'OR', #  оператор для объединения условий
+            #  список условий
+            'filters': [
+                {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': '>', 'value': 5},
+                {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': '<', 'value': 100},
+                {'is_complex': True, 'op': 'AND', 'filters': [
+                    {'is_complex': False, 'table': 'film_category', 'field': 'category_id', 'op': '>', 'value': 8},
+                    {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': '<', 'value': 10},
+                ]}
+            ]
+        },
     ],
-    'values': [],
+
+    #  список полей, получаемых в запросе; если список пуст, то выбираются все поля
+    'values': [
+        {
+            'table': 'category',  # название таблицы
+            'field': 'last_update',  #  название поля
+        }
+    ],
+
+    #  сортировка
+    'order_by': [
+        {
+            'table': 'film_category',  # название таблицы
+            'fields': ['film_id'],  #  поля
+            'type': 'asc',
+        }
+    ],
+
+    #  количество выбираемых строк
     'limit': 5,
 }
 
@@ -62,10 +118,10 @@ jsq1 = {
     ],
     'filters': [
         {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': 'in', 'value': {
-            'is_subquery': True,
-             'base': 'category',
-             'tables': ['category'],
-             'values': [{'table': 'category', 'field': 'category_id'}],
+            'is_subquery': True,  # здесь указывается, что значение является подзапросом
+            'base': 'category',
+            'tables': ['category'],
+            'values': [{'table': 'category', 'field': 'category_id'}],
         }},
         {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': 'in', 'value': {
             'is_subquery': True,
@@ -82,7 +138,6 @@ jsq1 = {
             ]
         }},
     ],
-    #'values': [{'table': 'category', 'field': 'last_update'}],
 }
 
 # пример описания фильтра для датафрейма в json
@@ -159,7 +214,7 @@ test_conf = {
         'test2': {
             'id': 'test2',
             'source': 'test',
-            'query': jsq1,
+            'query': jsq,
         },
         'test3': {
             'id': 'test3',
@@ -171,7 +226,7 @@ test_conf = {
         'film': {
             'id': 'film',
             'source': 'test',
-            'query': 'film',
+            'query': 'test2',
             'composite': False,
         },
         'test5': {
