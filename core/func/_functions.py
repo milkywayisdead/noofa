@@ -21,6 +21,7 @@ def _collect_functions():
         df,
         statistics,
         sql,
+        conn,
     )
     
     fmodules = (
@@ -33,6 +34,7 @@ def _collect_functions():
         df,
         statistics,
         sql,
+        conn,
     )
     for fmod in fmodules:
         for f in dir(fmod):

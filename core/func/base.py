@@ -141,6 +141,13 @@ class StatisticsFunc(Func):
     group = 'statistics'
 
 
+class ConnectionFunc(Func):
+    """
+    Функции подключения к источникам.
+    """
+    group = 'connection'
+
+
 class NonMandatoryArg:
     """
     Необязательный аргумент функции.

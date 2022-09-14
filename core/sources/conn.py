@@ -75,6 +75,7 @@ class PostgresSource(DatabaseSource):
         self._port = kwargs.get('port', 5432)
         self._user = kwargs.get('user')
         self._password = kwargs.get('password')
+        self._conn_str = kwargs.get('conn_str', None)
         self.connection = None
 
     def get_tables(self):
@@ -89,6 +90,11 @@ class PostgresSource(DatabaseSource):
         return tables
 
     def get_connection(self, **kwargs):
+        if self._conn_str:
+            conn_dict = _parse_conn_str(self._conn_str)
+            conn_dict['dbname'] = conn_dict.pop('database')
+            conn_dict['connect_timeout'] = 3
+            return psycopg2.connect(**conn_dict)
         conn = psycopg2.connect(
             host=self._host,
             port=self._port,
@@ -159,6 +165,7 @@ class MySqlSource(DatabaseSource):
         self._port = kwargs.get('port', 3306)
         self._user = kwargs.get('user')
         self._password = kwargs.get('password')
+        self._conn_str = kwargs.get('conn_str', None)
         self.connection = None
 
     def get_tables(self):
@@ -172,6 +179,10 @@ class MySqlSource(DatabaseSource):
         return tables
 
     def get_connection(self, **kwargs):
+        if self._conn_str:
+            conn_dict = _parse_conn_str(self._conn_str)
+            conn_dict['connect_timeout'] = 3
+            return mysql.connector.connect(**conn_dict)
         conn = mysql.connector.connect(
             host=self._host,
             port=self._port,
@@ -230,6 +241,7 @@ class RedisSource(DataSource):
         self._username = kwargs.get('user', None)
         self._password = kwargs.get('password', None)
         self.source = kwargs.get('source', '')
+        self._conn_str = kwargs.get('conn_str', None)
         self.connection = None
 
     def get_connection(self, **kwargs):
@@ -318,3 +330,15 @@ SOURCES_DICT = {
 
 def get_source_class(type_):
     return SOURCES_DICT.get(type_, None)
+
+
+def _parse_conn_str(conn_str):
+    _ = ['host', 'port', 'database', 'user', 'password']
+    conn_dict = {}
+    conn_str = conn_str.split(';')
+    for s in conn_str:
+        spl = s.split('=')
+        arg, val = spl[0], spl[1]
+        if arg in _:
+            conn_dict[arg] = val
+    return conn_dict
