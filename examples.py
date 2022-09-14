@@ -89,7 +89,7 @@ jsq1 = {
 panda_filter = [
     {
         'col_name': 'city.city_id',
-        'op': 'gt',
+        'op': '>',
         'value': 12,
         'is_q': False,
     },
@@ -105,7 +105,7 @@ panda_filter = [
             },
             {
                 'col_name': 'city.city_id',
-                'op': 'eq',
+                'op': '==',
                 'value': 22,
                 'is_q': False,
             },

@@ -78,15 +78,36 @@ class Order(DataframeFunc):
         return panda_builder.order_by(args[0], args[1], asc=asc)
 
 
+class DfFilterDict:
+    def __init__(self, dff_dict):
+        self._q = dff_dict
+
+    @property
+    def df_filter(self):
+        return self._q
+
+    def __and__(self, value):
+        return DfFilterDict({
+            'is_q': True,
+            'op': 'and',
+            'filters': [self.df_filter, value.df_filter],
+        })
+
+    def __or__(self, value):
+        return DfFilterDict({
+            'is_q': True,
+            'op': 'or',
+            'filters': [self.df_filter, value.df_filter],
+        })
+
 class DfFilter(DataframeFunc):
     """
     Функция создания фильтров для датафреймов.
     """
     description = 'Функция создания фильтров для датафреймов'
     args_description = [
-        MandatoryArg('Датафрейм1', 0),
-        MandatoryArg('Тип фильтра', 2),
         MandatoryArg('Название столбца', 1),
+        MandatoryArg('Тип фильтра', 2),
         MandatoryArg('Значение', 3),
     ]
 
@@ -95,18 +116,21 @@ class DfFilter(DataframeFunc):
         return 'df_filter'
 
     def _operation(self, *args):
-        df, filter_type = args[0], args[2]
+        return DfFilterDict({
+            'is_q': False,
+            'col_name': args[0],
+            'op': args[1],
+            'value': args[2],
+        })
+        """df, filter_type = args[0], args[2]
         col_name, value = args[1], args[3]
         pf = panda_builder.get_filter(filter_type)
         pf = pf(col_name, value)
         pf.df(df)
-        return pf
+        return pf"""
 
 
-class QDfFilter(DataframeFunc):
-    """
-    Функция создания составных фильтров для датафреймов.
-    """
+"""class QDfFilter(DataframeFunc):
     description = 'Функция создания составных фильтров для датафреймов'
     args_description = [
         MandatoryArg('Простой фильтр', 0),
@@ -117,7 +141,7 @@ class QDfFilter(DataframeFunc):
         return 'df_cfilter'
 
     def _operation(self, *args):
-        return panda_builder.filters.PandaQ(*args)
+        return panda_builder.filters.PandaQ(*args)"""
 
 
 class Filter(DataframeFunc):
@@ -135,7 +159,12 @@ class Filter(DataframeFunc):
         return 'filter'
 
     def _operation(self, *args):
-        return panda_builder.lazy_filter(args[0], args[1])
+        filters = args[1]
+        if not isinstance(filters, list):
+            filters = [filters.df_filter]
+        else:
+            filters = [f.df_filter for f in filters]
+        return panda_builder.filter(args[0], filters)
 
 
 class AddColumn(DataframeFunc):

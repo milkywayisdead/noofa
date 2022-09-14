@@ -24,6 +24,7 @@ class ReportTable:
         self.id = options['id']
         self._dataframe = options['dataframe']
         self.columns = options.get('columns', {})
+        self.aliases = options.get('aliases', {})
         self._data = None
 
     def build(self):

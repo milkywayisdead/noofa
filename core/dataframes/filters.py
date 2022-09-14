@@ -36,10 +36,14 @@ class PandaQ:
     def __init__(self, *panda_filters):
         self._filter = None
         for f in panda_filters:
-            if self._filter is None:
-                self._filter = f
+            if self.is_empty:
+                self._filter = f.filter
             else:
-                self._filter = (self._filter) & f
+                self._filter = (self._filter) & f.filter
+
+    @property
+    def is_empty(self):
+        return self._filter is None
 
     def __and__(self, panda_q):
         """
@@ -50,7 +54,8 @@ class PandaQ:
             self_f = self.filter
             if f is not None:
                 if self_f is not None: 
-                    return PandaQ(self.filter, f)
+                    self._filter = self.filter & f
+                    return self
                 else:
                     return panda_q
         return self
@@ -64,7 +69,9 @@ class PandaQ:
             self_f = self.filter
             if f is not None:
                 if self_f is not None:
-                    return PandaQ(self.filter | f)
+                    print(self._filter, f.filter)
+                    self._filter = self.filter | f
+                    return self
                 else:
                     return panda_q
         return self
@@ -165,12 +172,12 @@ class PandaIn(PandaFilter):
 
 
 PANDA_FILTERS = {
-    'gt': PandaGt,
-    'gte': PandaGte,
-    'lt': PandaLt,
-    'lte': PandaLte,
-    'eq': PandaEq,
-    'neq': PandaNeq,
+    '>': PandaGt,
+    '>=': PandaGte,
+    '<': PandaLt,
+    '<=': PandaLte,
+    '==': PandaEq,
+    '!=': PandaNeq,
     'contains': PandaContains,
     'startswith': PandaStartsWith,
     'endswith': PandaEndsWith,
@@ -187,21 +194,24 @@ def _parse_filter(df, panda_jsf):
         if op == 'or':
             panda_filter = PandaQ()
             for f in filters:
-                panda_filter |= PandaQ(f)
+                panda_filter |= f
         else:
-            panda_filter = PandaQ(*filters)
+            panda_filter = PandaQ()
+            for f in filters:
+                panda_filter &= f
         return panda_filter
     else:
         col, op, value = panda_jsf['col_name'], panda_jsf['op'], panda_jsf['value']
         panda_filter = PANDA_FILTERS[op](col, value)
         panda_filter.df(df)
-        return panda_filter
+        return PandaQ(panda_filter)
 
 def _parse_filters(df, panda_jsfilters):
     """
     Построение фильтра из json.
     """
-    filters = []
+    res = PandaQ()
     for f in panda_jsfilters:
-        filters.append(_parse_filter(df, f))
-    return PandaQ(*filters)
+        p = _parse_filter(df, f)
+        res &= p
+    return res
