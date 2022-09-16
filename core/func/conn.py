@@ -19,7 +19,7 @@ class NewConnection(ConnectionFunc):
 
     @classmethod
     def get_name(cls):
-        return 'new_connection'
+        return 'create_connection'
 
     def _operation(self, *args):
         conn = get_source_class(args[0])

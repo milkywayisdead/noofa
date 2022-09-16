@@ -24,23 +24,61 @@ class ReportBuilder:
         sources_conf = config_dict.get('sources', {})
         queries_config = config_dict.get('queries', {})
         dataframes_config = config_dict.get('dataframes', {})
+
+        """
+        добавление источников в схему:
+        источники добавляются из словаря (json) либо из строки подключения (conn_str)
+        либо из выражения (expression);
+        в случае выражения внешней функцией должна быть функция create_connection:
+        например, 'create_connection(тип_соединения, строка_подключения)'
+        """
         for s in sources_conf.values():
-            self._dataschema.add_source(**s)
+            build_from, value = s['from'], s['value']
+            opts = {'id': s['id'], 'type': s['type']}
+            if build_from == 'json':
+                opts.update(value)
+            elif build_from == 'conn_str':
+                opts['conn_str'] = value
+            elif build_from == 'expression':
+                conn = self.evaluate(value)
+                opts['connection'] = conn
+            self._dataschema.add_source(**opts)
+
+        """
+        добавление источников в схему:
+        источники добавляются из словаря (json) либо из выражения (expression);
+        выражение должно состоять из функции sql_select, например:
+        'sql_select("table1", sql_join("table2", "table1", "field1", "field2"))'.
+        """
         for q in queries_config.values():
-            self._dataschema.add_query(**q)
+            opts = {'id': q['id'], 'source': q['source']}
+            build_from, value = q['from'], q['value']
+            if build_from == 'json':
+                opts['query'] = value
+            elif build_from == 'expression':
+                opts['query'] = self.evaluate(value).q_part
+            self._dataschema.add_query(**opts)
+
+        # добавление датафреймов в схему
         for df in dataframes_config.values():
             self._dataschema.add_dataframe(**df)
 
     def evaluate(self, expr):
+        """
+        Вычисление значения по строке выражения.
+        """
         try: 
             return self.interpreter.evaluate(expr)
         except InterpreterContextError as e:
-            df = self.build_dataframe(e.key)
+            df = self.get_or_build_dataframe(e.key)
             self.interpreter.add_to_global(e.key, df)
             return self.evaluate(expr)
 
     def apply(self, df_id, expr):
-        df = self.build_dataframe(df_id)
+        """
+        Применение выражения к строкам датафрейма.
+        """
+        df = self.get_or_build_dataframe(df_id)
         return self.interpreter.apply(df, expr)
 
     @property
@@ -67,35 +105,76 @@ class ReportBuilder:
         self._results[query.id] = data
         return data
 
-    def build_dataframe(self, dataframe_id):
+    def get_or_build_dataframe(self, dataframe_id):
         """
-        Сформировать датафрейм.
+        Получить сформированный либо сформировать датафрейм.
         """
         df = self._built_dataframes.get(dataframe_id, None)
         if df is not None:
             return df
-        df = self.get_dataframe(dataframe_id)
-        if not df.is_composite:
-            dataframe = df.build()
         else:
-            build_options = df.build_options
-            build_type = build_options['type']
-            if build_type == 'join':
-                on = build_options['on']
-                dataframes = build_options['dataframes']
-                dataframes = [self.build_dataframe(df) for df in dataframes]
-                dataframe = panda_builder.join(dataframes[0], dataframes[1], on)
-            elif build_type == 'union':
-                dataframes = build_options['dataframes']
-                dataframes = [self.build_dataframe(df) for df in dataframes]
-                dataframe = panda_builder.union(dataframes)
-        if df.cols:
-            for col in df.cols:
-                col_name, expr = col['name'], col['value']
-                value = self.interpreter.apply(dataframe, expr)
-                dataframe = panda_builder.add_column(dataframe, col_name, value)
-        if df.filters:
-            dataframe = panda_builder.filter(dataframe, df.filters)
+            return self.build_dataframe(dataframe_id)
+
+    def build_base(self, dataframe_id):
+        """
+        Построение основы датафрейма.
+
+        dataframe_id - id датафрейма.
+        """
+        df = self.get_dataframe(dataframe_id)
+        build_type = df.build_type
+        if build_type == 'query':
+            dataframe = panda_builder.new(df.get_data())
+        elif build_type == 'expression':
+            dataframe = self.evaluate(df.build_from)
+        return dataframe
+
+    def build_dataframe(self, dataframe_id):
+        """
+        Сформировать датафрейм.
+
+        dataframe_id - id датафрейма.
+        """
+        df = self.get_dataframe(dataframe_id)
+        #  создание базового датафрейма - либо из запроса, либо из выражения
+        dataframe = self.build_base(dataframe_id)
+
+        #  приклеивание других датафреймов
+        for u in df.unions:
+            from_, value = u['from'], u['value']
+            if from_ == 'expression':
+                df2 = self.evaluate(value)
+            else:
+                df2 = self.get_or_build_dataframe(value)
+            dataframe = panda_builder.union([dataframe, df2])
+
+        #  добавление соединений с другими датафреймами
+        for j in df.joins:
+            from_, value = j['from'], j['value']
+            on, join_type = j['on'], j['type']
+            if from_ == 'expression':
+                df2 = self.evaluate(value)
+            else:
+                df2 = self.get_or_build_dataframe(value)
+            dataframe = panda_builder.join(dataframe, df2, on, join_type)
+
+        #  добавление новых столбцов либо изменение существующих
+        for col in df.cols:
+            col_name, expr = col['name'], col['value']
+            value = self.interpreter.apply(dataframe, expr)
+            dataframe = panda_builder.add_column(dataframe, col_name, value)
+
+        #  применение фильтров
+        filters = []
+        for f in df.filters:
+            from_, filter_ = f['from'], f['value']
+            if from_ == 'expression':
+                filter_ = self.evaluate(filter_).df_filter
+            filters.append(filter_)
+        if filters:
+            dataframe = panda_builder.filter(dataframe, filters)
+
+        #  упорядочивание
         if df.ordering:
             ordering = df.ordering
             cols, asc = ordering['cols'], ordering['asc']
@@ -107,7 +186,7 @@ class ReportBuilder:
         """
         Датафрейм -> словарь.
         """
-        df = self.build_dataframe(dataframe_id)
+        df = self.get_or_build_dataframe(dataframe_id)
         return df.to_dict(orient='records')
 
     def get_source(self, source_id):

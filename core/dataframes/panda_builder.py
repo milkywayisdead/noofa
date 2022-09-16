@@ -6,7 +6,7 @@ import pandas as pd
 from . import filters
 
 
-def new(data):
+def new(data={}):
     return pd.DataFrame(data)
 
 

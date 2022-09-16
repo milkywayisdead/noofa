@@ -21,8 +21,10 @@ class DataSchema:
         """
         id_ = options.pop('id')
         type_ = options.pop('type')
-        source_cls = get_source_class(type_)
-        conn = source_cls(**options)
+        conn = options.get('connection', None)
+        if conn is None:
+            source_cls = get_source_class(type_)
+            conn = source_cls(**options)
         self._sources[id_] = SchemaSource(id_, connection=conn)
         return self
 
@@ -42,19 +44,20 @@ class DataSchema:
         Добавление датафрейма в схему.
         """
         id_ = options['id']
-        source = self._sources.get(options['source'], None)
-        query = options.get('query', None)
-        if source is None and query is None:
-            options['source'], options['query'] = None, None
-            self._dataframes[id_] = SchemaDataframe(**options)
-            return self
-        if not source.is_sql:
-            query = None
-        else:
-            if not query is None:
-                query = self._queries[query]
-        options['source'] = source
-        options['query'] = query
+        base = options['base']
+        if base['type'] == 'query':
+            source = self._sources.get(base['source'], None)
+            query_id = base['value']
+            """if source is None and query is None:
+                options['source'], options['query'] = None, None
+                self._dataframes[id_] = SchemaDataframe(**options)
+                return self"""
+            if not source.is_sql:
+                query = None
+            else:
+                query = self._queries[query_id]
+            base['source'] = source
+            base['query'] = query
         self._dataframes[id_] = SchemaDataframe(**options)
         return self     
 
@@ -150,11 +153,12 @@ class SchemaDataframe:
     """
     def __init__(self, **options):
         self.id = options['id']
-        self._source = options.get('source', None)
-        self._query = options.get('query', None)
-        self.is_composite = options.get('composite', False)
-        if self.is_composite:
-            self._build = options['build']
+        self._build_type = options['base']['type']
+        self._build_from = options['base']['value'] 
+        self._source = options['base'].get('source', None)
+        self._query = options['base'].get('query', None)
+        self.unions = options.get('unions', [])
+        self.joins = options.get('joins', [])
         self.filters = options.get('filters', [])
         self.ordering = options.get('ordering', None)
         self.cols = options.get('columns', [])
@@ -171,5 +175,9 @@ class SchemaDataframe:
         return DataFrame(data)
 
     @property
-    def build_options(self):
-        return self._build
+    def build_type(self):
+        return self._build_type
+
+    @property
+    def build_from(self):
+        return self._build_from

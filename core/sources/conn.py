@@ -337,6 +337,8 @@ def get_source_class(type_):
 
 
 def _parse_conn_str(conn_str):
+    if conn_str.endswith(';'):
+        conn_str = conn_str[:-1]
     _ = ['host', 'port', 'database', 'user', 'password']
     conn_dict = {}
     conn_str = conn_str.split(';')

@@ -169,111 +169,207 @@ panda_filter = [
 ]
 
 test_conf = {
+    #  словарь с конфигурациями источников
     'sources': {
         'test': {
-            'id': 'test',
+            'id': 'test',  # id источника
+
+            # формат данных, по которому будет создаваться источник:
+            # json/conn_str/expression - словарь, строка подключения либо выражение
+            'from': 'json',  
             'type': 'postgres',
-            'host': 'localhost',
-            'port': 5432,
-            'dbname': 'reports',
-            'user': 'max',
-            'password': '12345',
+            'value': {
+                'host': 'localhost',
+                'port': 5432,
+                'dbname': 'reports',
+                'user': 'max',
+                'password': '12345',
+            },
         },
+
+        # здесь при создании источника будет использоваться строка подключения
         'mysql': {
-            'type': 'mysql',
+            'from': 'conn_str',
             'id': 'mysql',
-            'host': 'localhost',
-            'port': 3306,
-            'dbname': 'test',
-            'user': 'max',
-            'password': '12345',
-        }
+            'type': 'mysql',
+            'value': 'host=localhost;database=test;user=max;port=3306;password=12345',
+        },
+
+        # здесь при создании источника будет использоваться выражение
+        'redis': {
+            'from': 'expression',
+            'id': 'redis',
+            'type': 'redis',
+            'value': 'create_connection("redis", "host=localhost;port=6379;database=1")',
+        },
     },
+
+    # словарь с конфигурациями запросов к БД
     'queries': {
         'film': {
-            'id': 'film',
-            'source': 'test',
-            'query': {'base': 'film', 'tables': ['film']},
-        },
-        'test1': {
-            'id': 'test1',
-            'source': 'test',
-            'query': {'base': 'city', 'tables': ['city']}, #'order_by': [
-                #{'table': 'city', 'fields': ['last_name'], 'type': 'desc'},
-                #{'table': 'actor', 'fields': ['last_update'], 'type': 'desc'},
-            #]},
-        },
-        'test0': {
-            'id': 'test0',
-            'source': 'test',
-            'query': {'base': 'address', 'tables': ['address']}, #, 'order_by': [
-                #{'table': 'film', 'fields': ['last_update'], 'type': 'desc'},
-                #{'table': 'actor', 'fields': ['last_update'], 'type': 'desc'},
-            #]},
-        },
-        'test2': {
-            'id': 'test2',
-            'source': 'test',
-            'query': jsq,
+            'id': 'film',  # id запроса
+            'source': 'test',  # id источника
+
+            # формат данных, по которому будет создаваться запрос:
+            # json/expression - словарь либо выражение
+            'from': 'json', # json/expression
+
+            # этот запрос будет формироваться из словаря
+            'value': {'base': 'film', 'tables': ['film']},
         },
         'test3': {
             'id': 'test3',
             'source': 'mysql',
-            'query': {'base': 'titanic', 'tables': ['titanic'],},
-        }
-    },
-    'dataframes': {
-        'film': {
-            'id': 'film',
+            'from': 'expression',
+            # этот запрос будет формироваться из выражения
+            'value': 'sql_select("titanic")',
+        },
+        'test1': {
+            'id': 'test1',
             'source': 'test',
-            'query': 'test2',
-            'composite': False,
-        },
-        'test5': {
-            'id': 'test5',
-            'source': 'test',
-            'query': 'test1',
-            'composite': False,
-        },
-        'test6': {
-            'id': 'test6',
-            'source': 'test',
-            'query': 'test2',
-            'composite': False,
-        },
-        'test7': {
-            'id': 'test7',
-            'source': 'mysql',
-            'query': 'test3',
-            'composite': False,
-        },
-        'test8': {
-            'id': 'test8',
-            'composite': True,
-            'build': {
-                'type': 'union',
-                'dataframes': ['test7', 'test6', 'test0'],
-            },
-            'source': None,
-            'query': None,
+            'from': 'json',
+            'value': {'base': 'city', 'tables': ['city']},
         },
         'test0': {
             'id': 'test0',
-            'composite': False,
             'source': 'test',
-            'query': 'test0',
+            'from': 'json',
+            'value': {'base': 'address', 'tables': ['address']},
+        },
+        'test2': {
+            'id': 'test2',
+            'source': 'test',
+            'from': 'json',
+            'value': jsq,
+        },
+    },
+
+    #  словарь с конфигурациями датафреймов
+    'dataframes': {
+        'film': {
+            'id': 'film',  # id датафрейма
+
+            # конфигурация основы для датафрейма
+            'base': {
+                #  тип основы - результат запроса к бд (query, указыается id запроса)
+                #  либо выражение - expression, результат которого должен быть в свою очередь датафреймом
+
+                # этот датафрейм будет строиться по результатам запроса
+                'type': 'query',
+                #  'значение' основания - id запроса либо строка выражения
+                'value': 'film',
+                'source': 'test',  # id источника - актуально при type=query
+            },
+            # список конфигураций 'склеиваний' с датафреймом
+            'unions': [
+                #{
+                    #  формат 'приклеиваемого' значения - датафрейм или выражение
+                    #'from': 'dataframe',  # склеиваться будет с другим датафреймом 
+                    #'value': 'test5',  # нужно указать id датафрейма
+                #},
+                {
+                    'from': 'expression',  # значение приклеиваемого дф будет получено из выражения
+                    'value': 'test5["city.city_id"]',  
+                }
+            ],
+            # список соединений
+            'joins': [
+                {
+                    'from': 'expression',  # аналогично, формат/откуда берется датафрейм - другой датафрейм или выражение
+                    'value': 'dataframe(sql_execute(create_connection("postgres", "database=reports;user=max;password=12345;"), sql_select("address")))',
+                    'on': ['city.city_id', 'address.city_id', ],
+                    'type': 'inner',
+                },
+            ],
+            # список фильтров
+            'filters': [
+                {
+                    'from': 'json',
+                    'value': {
+                        'is_q': False,
+                        'col_name': 'city.city_id',
+                        'op': '>',
+                        'value': 10,
+                    },
+                },
+                {
+                    'from': 'expression',
+                    'value': 'df_filter("city.city_id", "<", 20)',
+                },
+            ],
+            'ordering': [],
+            'columns': [],
+        },
+        'test5': {
+            'id': 'test5',
+            'base': {
+                'type': 'query',
+                'value': 'test1',
+                'source': 'test',
+            },
+        },
+        'test6': {
+            'id': 'test6',
+            'base': {
+                'type': 'query',
+                'value': 'test2',
+                'source': 'test',
+            },
+        },
+        'test7': {
+            'id': 'test7',
+            'base': {
+                'type': 'query',
+                'value': 'test3',
+                'source': 'mysql',
+            },
+        },
+        'test0': {
+            'id': 'test0',
+            'base': {
+                'type': 'query',
+                'value': 'test0',
+                'source': 'test',
+            },
         },
         'testjoin': {
             'id': 'testjoin',
-            'composite': True,
-            'source': None,
-            'query': None,
-            'build': {
-                'type': 'join',
-                'dataframes': ['test0', 'test5'],
-                'on': ['address.city_id', 'city.city_id'],
+            'base': {
+                'type': 'expression',
+                'value': 'join(test0, test5, "address.city_id", "city.city_id", "inner")',
             },
-            'filters': panda_filter,
+            'filters': [
+                {
+                    'from': 'json',
+                    'value': {
+                        'col_name': 'city.city_id',
+                        'op': '>',
+                        'value': 12,
+                        'is_q': False,
+                    },
+                },
+                {
+                    'from': 'json',
+                    'value': {
+                        'is_q': True,
+                        'op': 'or',
+                        'filters': [
+                            {
+                                'col_name': 'address.city_id',
+                                'op': 'in',
+                                'value': [33, 35],
+                                'is_q': False,
+                            },
+                            {
+                                'col_name': 'city.city_id',
+                                'op': '==',
+                                'value': 22,
+                                'is_q': False,
+                            },
+                        ],
+                    },
+                },
+            ],
             'ordering': {
                 'asc': True,
                 'cols': ['city.city_id'],
