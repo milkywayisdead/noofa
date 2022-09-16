@@ -374,16 +374,50 @@ test_conf = {
                 'asc': True,
                 'cols': ['city.city_id'],
             },
+            #  список конф. изменений либо добавлений столбцов
             'columns': [
                 {
+                    #  источник значений - выражение (expression), применение выражения к строкам датафрейма (apply)
+                    'from': 'expression',
                     'name': 'test111',
                     'value': '11',
                 },
                 {
+                    'from': 'apply',
                     'name': 'test1112',
-                    'value': 'row["city.city_id"] * 99',
+                    'value': 'row["city.city_id"] * idx',
                 },
             ],
+        },
+    },
+}
+
+#  кофигурация компонентов отчёта
+components_conf = {
+    'table1': {
+        #  тип компонента - таблица или график - table/figure
+        'type': 'table',
+
+        #  основа - получаемые данные
+        'base': {
+            #  откуда берутся данные - датафрейм/выражение
+            'from': 'dataframe',  # dataframe/expression
+            'value': 'testjoin',
+        },
+        #  информация по компоновке
+        'layout': {
+            'exclude_columns': [],  # список столбцов датафрейма, которые исключаются из вывода
+            'aliases': {},  # словарь для переименования столбцов
+        },
+    },
+    'table1': {
+        'type': 'figure',
+        'figure_type': 'line',  # тип графика
+        'base': {
+            'from': 'expression',
+            'value': '',
+        },
+        'layout': {
         },
     },
 }

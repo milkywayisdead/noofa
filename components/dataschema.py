@@ -9,6 +9,9 @@ from ..utils import get_source_class, collect_tables, Qbuilder
 class DataSchema:
     """
     Схема получения данных профиля.
+
+    Содержит в себе значения по источникам, запросам и датафреймам,
+    которые используются при формировании отчёта в классе ReportBuilder.
     """
     def __init__(self, **kwargs):
         self._sources = kwargs.get('sources', {})
@@ -48,10 +51,6 @@ class DataSchema:
         if base['type'] == 'query':
             source = self._sources.get(base['source'], None)
             query_id = base['value']
-            """if source is None and query is None:
-                options['source'], options['query'] = None, None
-                self._dataframes[id_] = SchemaDataframe(**options)
-                return self"""
             if not source.is_sql:
                 query = None
             else:

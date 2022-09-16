@@ -39,6 +39,12 @@ class Interpreter:
         return result
 
     def apply(self, df, expr):
+        """
+        Применение выражения к строкам датафрейма.
+        Здесь исользуется локальный контекст интерпретатора,
+        при этом в выражении будут доступны переменные row - строка датафрейма в виде словаря,
+        и idx - порядковый номер строки. Нумерация строк - с 0.
+        """
         result = []
         rows = df.to_dict(orient='records')
         self._context.switch_to_local()
@@ -53,12 +59,22 @@ class Interpreter:
         return result
 
     def add_to_global(self, key, value):
+        """
+        Добавление ключа-значения в глобальный контекст.
+        """
         self._context.add_to_global(key, value)
 
     def add_to_local(self, key, value):
+        """
+        Добавление ключа-значения в локальный контекст.
+        """
         self._context.add_to_local(key, value)
 
     def _check_syntax(self, stree):
+        """
+        Проверка синтаксиса выражения/части выражения.
+        При наличии ошибки возвращает False.
+        """
         if stree is None:
             return True
         type_ = stree['type']
@@ -241,10 +257,3 @@ class Interpreter:
                 else:
                     res.append(o)
         return res
-
-
-
-
-    
-
-    

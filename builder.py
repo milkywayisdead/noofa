@@ -160,8 +160,11 @@ class ReportBuilder:
 
         #  добавление новых столбцов либо изменение существующих
         for col in df.cols:
-            col_name, expr = col['name'], col['value']
-            value = self.interpreter.apply(dataframe, expr)
+            from_, col_name, expr = col['from'], col['name'], col['value']
+            if from_ == 'expression':
+                value = self.evaluate(expr)
+            elif from_ == 'apply':
+                value = self.interpreter.apply(dataframe, expr)
             dataframe = panda_builder.add_column(dataframe, col_name, value)
 
         #  применение фильтров
@@ -179,6 +182,7 @@ class ReportBuilder:
             ordering = df.ordering
             cols, asc = ordering['cols'], ordering['asc']
             dataframe = panda_builder.order_by(dataframe, cols, asc=asc)
+
         self._built_dataframes[df.id] = dataframe
         return dataframe
 
