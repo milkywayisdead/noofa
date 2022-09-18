@@ -1,6 +1,5 @@
 from pandas import Series
 
-from ..sources.utils import Qbuilder, collect_tables
 from .base import Func, MandatoryArg, NonMandatoryArg
 from .errors import InterpreterContextError
 
@@ -139,40 +138,8 @@ class GetConnection(Func):
         return args[0][args[1]]
 
 
-class SqlExecute(Func):
-    """
-    Функция выполнения sql-запроса.
-    Используется на уровне интерпретатора.
-    """
-    group = 'context'
-    description = 'Функция контекста'
-    args_description = [
-        MandatoryArg('connection', 0),
-        MandatoryArg('query', 1),
-    ]
-
-    @classmethod
-    def get_name(cls):
-        return 'sql_execute'
-
-    def _operation(self, *args):
-        conn = args[0]
-        q = args[1].q_part
-        tables_list = collect_tables(q)
-        tables = {}
-        conn.open()
-        for table in tables_list:
-            t = conn.get_table(table)
-            tables[t._name] = t
-        qb = Qbuilder(tables, q)
-        query = qb.parse_query()
-        data = conn.get_data(query=query)
-        return data
-
-
 _context_funcs = {
     GetFromContext.get_name(): GetFromContext,
     GetSlice.get_name(): GetSlice,
     GetConnection.get_name(): GetConnection,
-    SqlExecute.get_name(): SqlExecute,
 }
