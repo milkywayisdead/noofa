@@ -1,7 +1,7 @@
 import statistics
 
 from .base import StatisticsFunc, MandatoryArg, NonMandatoryArg
-from ..dataframes.panda_builder import pd
+from .. import pd
 
 
 class Mean(StatisticsFunc):
