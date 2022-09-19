@@ -101,7 +101,7 @@ class ReportBuilder:
         query = self._compiled_queries.get(query_id, None)
         if query is None:
             query = self.get_query(query_id)
-            q = query.compile()
+            q = query._compile()
             self._compiled_queries[query.id] = q
             return q
         return query
@@ -111,6 +111,7 @@ class ReportBuilder:
             return self._results[query_id]
         query = self.get_query(query_id)
         data = query.execute()
+        self._compiled_queries[query.id] = query._compiled
         self._results[query.id] = data
         return data
 

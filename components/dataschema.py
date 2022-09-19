@@ -128,11 +128,12 @@ class SchemaQuery:
         self.id = id_
         self._query_as_json = query_as_json
         self._source = source
+        self._compiled = None
 
     def execute(self):
         with self._source as source:
-            query = self._compile()
-            data = source.get_data(query=query)
+            self._compiled = self._compile()
+            data = source.get_data(query=self._compiled)
             return data
 
     def _compile(self):
@@ -141,7 +142,10 @@ class SchemaQuery:
         """
         query = self._query_as_json
         tables_list = collect_tables(query)
-        tables = {t: self._source.get_table(t) for t in tables_list}
+        source = self._source
+        if not source.is_opened:
+            source.open()
+        tables = {t: source.get_table(t) for t in tables_list}
         qbuilder = Qbuilder(tables, query)
         return qbuilder.parse_query()
 
