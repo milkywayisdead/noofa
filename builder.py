@@ -1,7 +1,6 @@
 """
 Инструмент построения отчётов.
 """
-
 from .core.func.errors import InterpreterContextError
 from .core.func import Interpreter
 from .components.dataschema import DataSchema
@@ -13,7 +12,7 @@ class ReportBuilder:
     """
     Формирователь отчётов.
     """
-    def __init__(self, config_dict={}):
+    def __init__(self, config_dict={}, components_conf_dict={}):
         self._dataschema = DataSchema()  # схема данных
         self._components_schema = ComponentsSchema()  # схема компонентов
         self.interpreter = Interpreter()  # интерпретатор для вычисления формул
@@ -62,6 +61,16 @@ class ReportBuilder:
         # добавление датафреймов в схему
         for df in dataframes_config.values():
             self._dataschema.add_dataframe(**df)
+
+        # добавление компонентов в схему компонентов
+        for c in components_conf_dict.values():
+            type_ = c['type']
+            if type_ == 'table':
+                method = self._components_schema.add_table
+            elif type_ == 'figure':
+                method = self._components_schema.add_figure
+            lo = c.pop('layout')
+            method(**{**c, **lo})
 
     def evaluate(self, expr):
         """
@@ -186,6 +195,13 @@ class ReportBuilder:
         self._built_dataframes[df.id] = dataframe
         return dataframe
 
+    def build_table(self, table_id):
+        table = self._components_schema.get_table(table_id)
+        build_from, base = table.build_from, table.base
+        df = self.evaluate(base)
+        table.df = df
+        return table
+
     def df_to_dict(self, dataframe_id):
         """
         Датафрейм -> словарь.
@@ -202,7 +218,5 @@ class ReportBuilder:
     def get_dataframe(self, dataframe_id):
         return self._dataschema.get_dataframe(dataframe_id)
 
-
-        
-
-    
+    def get_component(self, component_id):
+        return self._components_schema.get_component(component_id)

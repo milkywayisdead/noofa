@@ -269,7 +269,7 @@ test_conf = {
             'ordering': [],
             'columns': [],
         },
-        'test5': {
+        'test': {
             'id': 'test5',
             'base': {
                 'type': 'query',
@@ -277,28 +277,12 @@ test_conf = {
                 'source': 'test',
             },
         },
-        'test6': {
-            'id': 'test6',
-            'base': {
-                'type': 'query',
-                'value': 'test2',
-                'source': 'test',
-            },
-        },
-        'test7': {
-            'id': 'test7',
-            'base': {
-                'type': 'query',
-                'value': 'test3',
-                'source': 'mysql',
-            },
-        },
         'test0': {
             'id': 'test0',
             'base': {
                 'type': 'query',
                 'value': 'test0',
-                'source': 'test',
+                'source': 'mysql',
             },
         },
         'testjoin': {
@@ -364,6 +348,7 @@ test_conf = {
 #  кофигурация компонентов отчёта
 components_conf = {
     'table1': {
+        'id': 'table1',
         #  тип компонента - таблица или график - table/figure
         'type': 'table',
 
@@ -375,23 +360,42 @@ components_conf = {
         },
         #  информация по компоновке
         'layout': {
-            'exclude_columns': [],  # список столбцов датафрейма, которые исключаются из вывода
-            'aliases': {},  # словарь для переименования столбцов
+            # Заголовок таблицы, если нужно
+            'title': {
+                'text': '',
+            },
+            # список столбцов датафрейма, которые исключаются при выводе
+            'to_exclude': ['city.city_id', 'address.address_id', 'address.address2', 'address.city_id'],
+
+            # словарь для переименования столбцов;
+            # формат {'название_существующего_столбца1': 'новое_название_столбца', ...}
+            'aliases': {
+                'city.city': 'город',
+            },
         },
     },
-    'table1': {
-        'type': 'figure',
-        'engine': 'plotly',
+    'figure1': {
+        'id': 'fig1',
+        'type': 'figure',  # график
+        'engine': 'plotly',  # "движок" - библиотека, которая будет исп. при построении графика
         'figure_type': 'line',  # тип графика
         'base': {
-            'dataset1': {
-                'x_from': 'expression',
-                'y_from': '',
-                'x': [],
-                'y': [],
+            'from': 'json',  # формат данных, в этом случае - набор отдельных линий
+            'value': {
+                'dataset1': {
+                    'x_from': 'expression',
+                    'y_from': '',
+                    'x': [],
+                    'y': [],
+                },
             },
         },
         'layout': {
+            # заголовок графика
+            'title': {
+                'text': 'Графег1',  # текст заголовка
+                'font_size': 12,    # размер текста
+            },
         },
     },
 }
