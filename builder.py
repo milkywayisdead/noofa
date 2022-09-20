@@ -203,6 +203,24 @@ class ReportBuilder:
         table.df = df
         return table
 
+    def build_figure(self, figure_id):
+        figure = self._components_schema.get_figure(figure_id)
+        figure.build()
+        datasets = {**figure.base}
+        for n, ds in enumerate(datasets.values()):
+            x_from, y_from = ds.get('x_from', None), ds.get('y_from', None)
+            name = ds.get('name', f'ds{n}')
+            if x_from == 'expression':
+                x = self.evaluate(ds['x'])
+            else:
+                x = ds['x']
+            if y_from == 'expression':
+                y = self.evaluate(ds['y'])
+            else:
+                y = ds['y']
+            figure.add_dataset(x=x, y=y, name=name)
+        return figure
+
     def df_to_dict(self, dataframe_id):
         """
         Датафрейм -> словарь.

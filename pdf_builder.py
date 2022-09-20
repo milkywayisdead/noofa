@@ -1,13 +1,13 @@
 """
 Для построения pdf-документа отчёта.
 """
-import io
+from io import BytesIO
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
-from reportlab.platypus import LongTable, TableStyle
+from reportlab.platypus import Table
 
 
 class PdfReport:
@@ -37,13 +37,7 @@ class PdfReport:
         header = options.get('header', None)
         table_data = options['data']
         x, y = options['x'], options['y']
-        t = LongTable(table_data)
-        t.setStyle(TableStyle(
-            [('LINEABOVE', (0,0), (-1,0), 2, colors.green),
-            ('LINEABOVE', (0,1), (-1,-1), 0.25, colors.black),
-            ('LINEBELOW', (0,-1), (-1,-1), 2, colors.green),
-            ('ALIGN', (1,1), (-1,-1), 'RIGHT')]
-        ))
+        t = Table(table_data)
         t.wrapOn(self.canvas, *self._page)
         t.drawOn(self.canvas, x, y)
         self.canvas.showPage()
@@ -56,7 +50,7 @@ class PdfReport:
         """
         raw_img = options.pop('image_as_bytes')
         x, y = options.pop('x'), options.pop('y')
-        image = ImageReader(io.BytesIO(raw_img))
+        image = ImageReader(BytesIO(raw_img))
         self.canvas.drawImage(image, x, y, **options)
         return self
 

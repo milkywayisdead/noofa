@@ -104,17 +104,21 @@ class GetSlice(Func):
     def _operation(self, *args):
         args = list(args)
         obj, key = args.pop(0), args[0]
+
+        # в случае применения функции apply интерпретатора объектом может быть словарь 
         if isinstance(obj, dict):
             result = obj[key[0]]
         else:
-            if len(args) > 1:
-                result = obj[[args]]
-            else:
+            # если названий колонок несколько, то используется их список,
+            # если одно - то первый элемент списка
+            if len(key) > 1:
                 result = obj[key]
-        if isinstance(result, Series):
-            result = result.to_list()
-        if isinstance(obj, Series):
-            result = result[0]
+            else:
+                result = obj[key[0]]
+        #if isinstance(result, Series):
+        #    result = result.to_list()
+        #if isinstance(obj, Series):
+        #    result = result[0]
         return result
 
 

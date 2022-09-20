@@ -238,7 +238,7 @@ test_conf = {
                 #},
                 {
                     'from': 'expression',  # значение приклеиваемого дф будет получено из выражения
-                    'value': 'test5["city.city_id"]',  
+                    'value': 'dataframe(test5["city.city_id"])',  
                 }
             ],
             # список соединений
@@ -355,7 +355,7 @@ components_conf = {
         #  основа - получаемые данные
         'base': {
             #  откуда берутся данные - датафрейм/выражение
-            'from': 'dataframe',  # dataframe/expression
+            'from': 'dataframe',  # dataframe/expression/json
             'value': 'testjoin',
         },
         #  информация по компоновке
@@ -378,23 +378,45 @@ components_conf = {
         'id': 'fig1',
         'type': 'figure',  # график
         'engine': 'plotly',  # "движок" - библиотека, которая будет исп. при построении графика
-        'figure_type': 'line',  # тип графика
+        'figure_type': 'pie',  # тип графика
         'base': {
             'from': 'json',  # формат данных, в этом случае - набор отдельных линий
             'value': {
                 'dataset1': {
+                    #'name': 'aaaa',
                     'x_from': 'expression',
-                    'y_from': '',
-                    'x': [],
-                    'y': [],
+                    #'y_from': 'expression',
+                    'x': 'list(1, 2)', #test0["address.address_id"]',
+                    #'y': 'test5["city.country_id"]',
                 },
             },
         },
         'layout': {
+            'showlegend': True,
             # заголовок графика
             'title': {
                 'text': 'Графег1',  # текст заголовка
                 'font_size': 12,    # размер текста
+            },
+        },
+    },
+    'figure2': {
+        'id': 'fig2',
+        'type': 'figure',
+        'engine': 'plotly',
+        'figure_type': 'line',
+        'base': {
+            'from': 'dataframe',
+            'value': 'test0',
+            'x': '',
+            'y': '',
+            'labels': '',
+        },
+        'layout': {
+            'showlegend': True,
+            'title': {
+                'text': 'Графег1',
+                'font_size': 12,
             },
         },
     },

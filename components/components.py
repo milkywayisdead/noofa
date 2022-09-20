@@ -118,7 +118,7 @@ class ReportTable(ReportComponent):
         sep, idx = ';', False
         if path is None:
             return self.df.to_csv(sep=sep, index=idx)
-        file = open(path, 'a')
+        file = open(path, 'w')
         return self.df.to_csv(file, sep=sep, index=idx)
 
     def to_excel(self, path):
@@ -128,16 +128,34 @@ class ReportTable(ReportComponent):
     def header(self):
         return self.df.columns.to_list()
 
+    @property
+    def body(self):
+        return list(self.df.to_records())
+
 
 class ReportFigure(ReportComponent):
     def __init__(self, **options):
         super().__init__(**options)
         self._engine = options['engine']
         self._figure_type = options['figure_type']
+        self._showlegend = options.get('showlegend', False)
         self._base_figure = FIGURES[self._engine][self._figure_type]
+        self._figure = None
 
-    def add_dataset(self, dataset):
-        pass
+    @property
+    def figure(self):
+        return self._figure.figure
+
+    def build(self):
+        if self._figure is None:
+            bf = self._base_figure(
+                title=self._title,
+                showlegend=self._showlegend,
+            )
+            self._figure = bf
+
+    def add_dataset(self, **dataset):
+        self._figure.add_dataset(**dataset)
 
     def to_bytes(self):
         pass
