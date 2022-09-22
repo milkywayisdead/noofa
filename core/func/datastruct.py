@@ -3,6 +3,7 @@
 """
 
 from .base import DatastructFunc, NonMandatoryArg, MandatoryArg
+from ..dataframes.panda_builder import pd
 
 
 class List(DatastructFunc):
@@ -18,3 +19,27 @@ class List(DatastructFunc):
 
     def _operation(self, *args):
         return [arg for arg in args]
+
+
+class ToList(DatastructFunc):
+    """
+    Функция преобразования в список элементов.
+    """
+    description = 'Функция создания списка элементов'
+    args_description = [
+        MandatoryArg('Элемент', 2),
+    ]
+
+    @classmethod
+    def get_name(cls):
+        return 'to_list'
+
+    def _operation(self, *args):
+        arg = args[0]
+        if isinstance(arg, pd.DataFrame):
+            cols = arg.columns
+            if len(cols) == 1:
+                return arg[cols[0]].to_list()
+        elif isinstance(arg, pd.Series):
+            return arg.to_list()
+        return []

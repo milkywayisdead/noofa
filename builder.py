@@ -204,22 +204,40 @@ class ReportBuilder:
         return table
 
     def build_figure(self, figure_id):
+        def _eval_xy(from_, value):
+            if from_ == 'expression':
+                res = self.evaluate(value)
+            elif from_ == 'column':
+                df_str, col_name, df_from = value['dataframe'], value['column'], value['df_from']
+                if df_from == 'expression':
+                    _df = self.evaluate(df_str)
+                else:
+                    _df = self.get_or_build_dataframe(df_str)
+                res = _df[col_name]
+            return res
+
         figure = self._components_schema.get_figure(figure_id)
-        figure.build()
-        datasets = {**figure.base}
-        for n, ds in enumerate(datasets.values()):
-            x_from, y_from = ds.get('x_from', None), ds.get('y_from', None)
-            name = ds.get('name', f'ds{n}')
-            if x_from == 'expression':
-                x = self.evaluate(ds['x'])
+        base, build_from = figure.base, figure.build_from
+        data = []
+        if build_from == 'list':
+            for i in base:
+                x_from, y_from = i['x_from'], i['y_from']
+                _x, _y = i['x'], i['y']
+                x, y = _eval_xy(x_from, _x), _eval_xy(y_from, _y)
+                data.append({
+                    'x': x,
+                    'y': y,
+                    'name': i['name'],
+                })
+        elif build_from in ('grouped'):
+            df_from, df_str = base['df_from'], base['dataframe']
+            if df_from == 'expression':
+                df = self.evaluate(df_str)
             else:
-                x = ds['x']
-            if y_from == 'expression':
-                y = self.evaluate(ds['y'])
-            else:
-                y = ds['y']
-            figure.add_dataset(x=x, y=y, name=name)
-        return figure
+                df = self.get_or_build_dataframe(df_str)
+            data = df
+        _ = figure.build(data=data)
+        return figure.figure
 
     def df_to_dict(self, dataframe_id):
         """

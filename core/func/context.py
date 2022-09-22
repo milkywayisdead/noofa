@@ -109,12 +109,11 @@ class GetSlice(Func):
         if isinstance(obj, dict):
             result = obj[key[0]]
         else:
-            # если названий колонок несколько, то используется их список,
-            # если одно - то первый элемент списка
-            if len(key) > 1:
-                result = obj[key]
-            else:
-                result = obj[key[0]]
+            result = obj[key]
+            #if len(key) > 1:
+            #    result = obj[key]
+            #else:
+            #    result = obj[[key[0]]]
         #if isinstance(result, Series):
         #    result = result.to_list()
         #if isinstance(obj, Series):

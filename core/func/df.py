@@ -2,23 +2,6 @@ from .base import DataframeFunc, MandatoryArg, NonMandatoryArg
 from ..dataframes import panda_builder
 
 
-class Build(DataframeFunc):
-    """
-    Функция создания датафреймов.
-    """
-    description = 'Функция создания датафреймов'
-    args_description = [
-        MandatoryArg('Данные', 1),
-    ]
-
-    @classmethod
-    def get_name(cls):
-        return 'df_build'
-
-    def _operation(self, *args):
-        return panda_builder.DataFrame(args[0])
-
-
 class Join(DataframeFunc):
     """
     Функция соединения датафреймов.
@@ -31,6 +14,10 @@ class Join(DataframeFunc):
         MandatoryArg('Поле второго датафрейма', 3),
         MandatoryArg('Тип объединения', 4),
     ]
+
+    @classmethod
+    def get_name(self):
+        return 'df_join'
 
     def _operation(self, *args):
         df1, df2 = args[0], args[1]
@@ -49,6 +36,10 @@ class Union(DataframeFunc):
         MandatoryArg('Датафрейм1', 0),
         MandatoryArg('Датафрейм2', 1),
     ]
+
+    @classmethod
+    def get_name(self):
+        return 'df_union'
 
     def _operation(self, *args):
         return panda_builder.union(args)
@@ -167,6 +158,24 @@ class AddColumn(DataframeFunc):
         return panda_builder.add_column(df, col_name, values)
 
 
+class GetColumn(DataframeFunc):
+    """
+    Функция получения столбца датафрейма.
+    """
+    description = 'Функция получения столбца датафрейма'
+    args_description = [
+        MandatoryArg('Датафрейм', 0),
+        MandatoryArg('Название столбца', 1),
+    ]
+
+    @classmethod
+    def get_name(cls):
+        return 'get_column'
+
+    def _operation(self, *args):
+        return args[0][args[1]]
+
+
 class Head(DataframeFunc):
     """
     Функция получения n первых строк датафрейма.
@@ -176,6 +185,10 @@ class Head(DataframeFunc):
         MandatoryArg('Датафрейм', 0),
         MandatoryArg('Количество строк', 1),
     ]
+
+    @classmethod
+    def get_name(self):
+        return 'df_head'
 
     def _operation(self, *args):
         return args[0].head(args[1])
@@ -191,6 +204,10 @@ class Tail(DataframeFunc):
         MandatoryArg('Количество строк', 1),
     ]
 
+    @classmethod
+    def get_name(self):
+        return 'df_tail'
+
     def _operation(self, *args):
         return args[0].tail(args[1])
 
@@ -201,7 +218,7 @@ class CreateDataframe(DataframeFunc):
     """
     description = 'Функция создания датафреймов'
     args_description = [
-        MandatoryArg('Данные', 0),
+        NonMandatoryArg('Данные', 0),
     ]
 
     @classmethod
@@ -209,4 +226,6 @@ class CreateDataframe(DataframeFunc):
         return 'dataframe'
 
     def _operation(self, *args):
+        if not args:
+            return panda_builder.new()
         return panda_builder.new(args[0])

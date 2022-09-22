@@ -289,7 +289,7 @@ test_conf = {
             'id': 'testjoin',
             'base': {
                 'type': 'expression',
-                'value': 'join(test0, test5, "address.city_id", "city.city_id", "inner")',
+                'value': 'df_join(test0, test5, "address.city_id", "city.city_id", "inner")',
             },
             'filters': [
                 {
@@ -378,26 +378,30 @@ components_conf = {
         'id': 'fig1',
         'type': 'figure',  # график
         'engine': 'plotly',  # "движок" - библиотека, которая будет исп. при построении графика
-        'figure_type': 'pie',  # тип графика
+        'figure_type': 'line',  # тип графика
         'base': {
-            'from': 'json',  # формат данных, в этом случае - набор отдельных линий
-            'value': {
-                'dataset1': {
-                    #'name': 'aaaa',
+            'from': 'list',  # формат данных, в этом случае - набор отдельных линий
+            'value': [
+                {
+                    'name': 'Alberta',
                     'x_from': 'expression',
-                    #'y_from': 'expression',
-                    'x': 'list(1, 2)', #test0["address.address_id"]',
-                    #'y': 'test5["city.country_id"]',
+                    'x': 'get_column(filter(test0, df_filter("address.district", "==", "Alberta")), "address.address_id")',
+                    'y_from': 'column',
+                    'y': {'df_from': 'expression', 'dataframe': 'filter(test0, df_filter("address.district", "==", "Alberta"))', 'column': 'address.phone'},
                 },
-            },
+                {
+                    'name': 'QLD',
+                    'x_from': 'column',
+                    'x': {'df_from': 'expression', 'dataframe': 'filter(test0, df_filter("address.district", "==", "QLD"))', 'column': "address.address_id"},
+                    'y_from': 'expression',
+                    'y': 'get_column(filter(test0, df_filter("address.district", "==", "QLD")), "address.phone")',
+                },
+            ],
         },
         'layout': {
             'showlegend': True,
-            # заголовок графика
-            'title': {
-                'text': 'Графег1',  # текст заголовка
-                'font_size': 12,    # размер текста
-            },
+            'title_text': 'Графег1',
+            'title_font_size': 12,
         },
     },
     'figure2': {
@@ -406,18 +410,15 @@ components_conf = {
         'engine': 'plotly',
         'figure_type': 'line',
         'base': {
-            'from': 'dataframe',
-            'value': 'test0',
-            'x': '',
-            'y': '',
-            'labels': '',
+            'from': 'grouped',  # формат данных, в этом случае - набор отдельных линий
+            'value': {'df_from': 'dataframe', 'dataframe': 'test0', 'line_group': 'address.district'},
+            'x': 'address.address_id',
+            'y': 'address.phone',
         },
         'layout': {
             'showlegend': True,
-            'title': {
-                'text': 'Графег1',
-                'font_size': 12,
-            },
+            'title_text': 'Графег2',
+            'title_font_size': 12,
         },
     },
 }

@@ -1,7 +1,7 @@
 """
 Классы графических компонентов отчёта.
 """
-from .graph import FIGURES
+from .fig import _get_fig_builder
 
 
 class ComponentsSchema:
@@ -31,6 +31,9 @@ class ComponentsSchema:
         base = options.pop('base')
         build_from, base_value = base['from'], base['value']
         engine = options.get('engine', 'plotly')
+        if build_from == 'grouped':
+            options['line_group'] = base_value['line_group']
+            options['x'], options['y'] = base['x'], base['y']
         if engine:
             options.pop('engine')
         self._figures[figure_id] = ReportFigure(
@@ -59,9 +62,8 @@ class ReportComponent:
         self.type = options['type']  # chart, table, filter
         self._build_from = options['build_from']
         self._base = options['base_value']
-        title = options.get('title', {})
-        self._title = title.get('text', '')
-        self._title_font_size = title.get('font_size', 12)
+        self._title_text = options.get('title_text', '')
+        self._title_font_size = options.get('title_font_size', 12)
 
     @property
     def build_from(self):
@@ -139,26 +141,33 @@ class ReportFigure(ReportComponent):
         self._engine = options['engine']
         self._figure_type = options['figure_type']
         self._showlegend = options.get('showlegend', False)
-        self._base_figure = FIGURES[self._engine][self._figure_type]
+        self._base_figure = _get_fig_builder(self._figure_type, self._engine)
         self._figure = None
+        self._names = options.get('names', '')
+        self._line_group = options.get('line_group', '')
+        self._x_col, self._y_col = options.get('x', ''), options.get('y', '')
 
     @property
     def figure(self):
-        return self._figure.figure
+        return self._figure
 
-    def build(self):
-        if self._figure is None:
-            bf = self._base_figure(
-                title=self._title,
-                showlegend=self._showlegend,
-            )
-            self._figure = bf
-
-    def add_dataset(self, **dataset):
-        self._figure.add_dataset(**dataset)
+    def build(self, **kwargs):
+        options = self._build_options()
+        options['data'] = kwargs.get('data', [])
+        self._figure = self._base_figure(**options)
+        return self.figure
 
     def to_bytes(self):
-        pass
+        return self.figure.to_image()
 
-    def to_png(self):
-        pass
+    def _build_options(self):
+        return {
+            'from': self.build_from,
+            'title': self._title_text,
+            'title_font_size': self._title_font_size,
+            'showlegend': self._showlegend,
+            'names': self._names,
+            'x': self._x_col,
+            'y': self._y_col,
+            'line_group': self._line_group,
+        }
