@@ -198,46 +198,15 @@ class ReportBuilder:
 
     def build_table(self, table_id):
         table = self._components_schema.get_table(table_id)
-        build_from, base = table.build_from, table.base
-        df = self.evaluate(base)
-        table.df = df
+        table.evaluator = self
+        table.build()
         return table
 
     def build_figure(self, figure_id):
-        def _eval_xy(from_, value):
-            if from_ == 'expression':
-                res = self.evaluate(value)
-            elif from_ == 'column':
-                df_str, col_name, df_from = value['dataframe'], value['column'], value['df_from']
-                if df_from == 'expression':
-                    _df = self.evaluate(df_str)
-                else:
-                    _df = self.get_or_build_dataframe(df_str)
-                res = _df[col_name]
-            return res
-
         figure = self._components_schema.get_figure(figure_id)
-        base, build_from = figure.base, figure.build_from
-        data = []
-        if build_from == 'list':
-            for i in base:
-                x_from, y_from = i['x_from'], i['y_from']
-                _x, _y = i['x'], i['y']
-                x, y = _eval_xy(x_from, _x), _eval_xy(y_from, _y)
-                data.append({
-                    'x': x,
-                    'y': y,
-                    'name': i['name'],
-                })
-        elif build_from in ('grouped'):
-            df_from, df_str = base['df_from'], base['dataframe']
-            if df_from == 'expression':
-                df = self.evaluate(df_str)
-            else:
-                df = self.get_or_build_dataframe(df_str)
-            data = df
-        _ = figure.build(data=data)
-        return figure.figure
+        figure.evaluator = self
+        fig = figure.build()
+        return fig
 
     def df_to_dict(self, dataframe_id):
         """

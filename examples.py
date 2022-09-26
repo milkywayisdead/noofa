@@ -411,7 +411,8 @@ components_conf = {
         'figure_type': 'line',
         'base': {
             'from': 'grouped',  # формат данных, в этом случае - набор отдельных линий
-            'value': {'df_from': 'dataframe', 'dataframe': 'test0', 'line_group': 'address.district'},
+            'value': {'df_from': 'dataframe', 'dataframe': 'test0'},
+            'line_group': 'address.district',
             'x': 'address.address_id',
             'y': 'address.phone',
         },
@@ -419,6 +420,96 @@ components_conf = {
             'showlegend': True,
             'title_text': 'Графег2',
             'title_font_size': 12,
+        },
+    },
+    'figure3': {
+        'id': 'fig3',
+        'type': 'figure',
+        'engine': 'plotly',
+        'figure_type': 'pie',
+        'base': {
+            'from': 'list',
+            'value': [
+                {
+                    'value': 'mean(test0["address.address_id"])',
+                    'name': 'Жужа' 
+                },
+                {
+                    'value': 'min(test0["address.address_id"])',
+                    'name': 'Жожа' 
+                },
+            ],
+        },
+        'layout': {
+            'showlegend': True,
+            'title_text': 'Графег2',
+            'title_font_size': 12,
+        },
+    },
+    'figure4': {
+        'id': 'fig4',
+        'type': 'figure',
+        'engine': 'plotly',
+        'figure_type': 'pie',
+        'base': {
+            'from': 'dataframe',
+            'value': {'df_from': 'dataframe', 'dataframe': 'df_head(test0, 10)'},
+            'values': 'address.address_id',
+            'names': 'address.district',
+        },
+        'layout': {
+            'showlegend': True,
+            'title_text': 'Графег2',
+            'title_font_size': 18,
+        },
+    },
+    'figure4': {
+        'id': 'bar',
+        'type': 'figure',
+        'engine': 'plotly',
+        'figure_type': 'bar',
+        'base': {
+            'from': 'list',
+            'value': [
+                {
+                    'x_from': 'column',
+                    'y_from': 'expression',
+                    'x': {'df_from': 'expression', 'dataframe': 'filter(test0, df_filter("address.district", "==", "QLD"))', 'column': "address.district"},
+                    'y': 'test0["address.address_id"]',
+                    'name': 'b52',
+                },
+                {
+                    'x_from': 'expression',
+                    'y_from': 'expression',
+                    'x': 'test0["address.district"]',
+                    'y': 'test0["address.address_id"]',
+                    'name': 'b53',
+                },
+            ],
+            'barmode': 'relative',
+        },
+        'layout': {
+            'showlegend': True,
+            'title_text': 'Столбцы',
+            'title_font_size': 18,
+        },
+    },
+    'figure5': {
+        'id': 'bar2',
+        'type': 'figure',
+        'engine': 'plotly',
+        'figure_type': 'hbar',
+        'base': {
+            'from': 'dataframe',
+            'value': {'df_from': 'dataframe', 'dataframe': 'test0'},
+            'y': 'address.district',
+            'x': 'address.address_id',
+            'barmode': 'relative',
+        },
+        'layout': {
+            'showlegend': True,
+            'title_text': 'Столбцы',
+            'title_font_size': 18,
         },
     },
 }
