@@ -309,14 +309,14 @@ test_conf = {
                         'filters': [
                             {
                                 'col_name': 'address.city_id',
-                                'op': 'in',
-                                'value': [33, 35],
+                                'op': '>',
+                                'value': 20,
                                 'is_q': False,
                             },
                             {
                                 'col_name': 'city.city_id',
-                                'op': '==',
-                                'value': 22,
+                                'op': '<',
+                                'value': 100,
                                 'is_q': False,
                             },
                         ],
@@ -362,7 +362,7 @@ components_conf = {
         'layout': {
             # Заголовок таблицы, если нужно
             'title': {
-                'text': '',
+                'text': 'Таблица1',
             },
             # список столбцов датафрейма, которые исключаются при выводе
             'to_exclude': ['city.city_id', 'address.address_id', 'address.address2', 'address.city_id'],
@@ -501,7 +501,7 @@ components_conf = {
         'figure_type': 'hbar',
         'base': {
             'from': 'dataframe',
-            'value': {'df_from': 'dataframe', 'dataframe': 'test0'},
+            'value': {'df_from': 'dataframe', 'dataframe': 'df_head(test0, 8)'},
             'y': 'address.district',
             'x': 'address.address_id',
             'barmode': 'relative',

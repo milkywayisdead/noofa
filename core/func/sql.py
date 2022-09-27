@@ -194,6 +194,11 @@ class SqlOrderBy(SqlFunc):
 
 
 class SqlDict:
+    """
+    Обертка для select-запросов и их частей в виде словарей.
+    Используется для упрощенного сложения запросов и фильтров
+    в виде словарей.
+    """
     def __init__(self, dict_):
         self._q = dict_
 
@@ -203,6 +208,9 @@ class SqlDict:
 
 
 class SqlWhereDict(SqlDict):
+    """
+    Обертка для фильтров where в виде словарей.
+    """
     def __and__(self, value):
         return SqlWhereDict({
             'is_complex': True,

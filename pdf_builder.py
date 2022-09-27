@@ -3,23 +3,21 @@
 """
 from io import BytesIO
 
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
-from reportlab.platypus import Table
+from reportlab.platypus import Table, TableStyle, SimpleDocTemplate, Image, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 
 class PdfReport:
     def __init__(self, path, **options):
-        self._path = path
-        self._page = options.get('page', A4)
-        self._canvas = canvas.Canvas(self._path, pagesize=self._page)
         self._current_x, self._current_y = 0, 0
-
-    @property
-    def canvas(self):
-        return self._canvas
+        self._doc = SimpleDocTemplate(filename=path, pagesize=landscape(A4))
+        self._story = []
 
     def add_title(self, **options):
         return self
@@ -30,37 +28,39 @@ class PdfReport:
         """
         return self
 
-    def add_table(self, **options):
+    def add_pagebreak(self):
+        """
+        Добавление разрыва страницы.
+        """
+        self._story.append(PageBreak())
+
+    def add_table(self, data):
         """
         Добавление таблицы.
+        data - содержимое таблицы в виде списка списков -
+        т.е. каждый список содержит значения ячеек соответствующей
+        строки. Заголовок должен передаваться в этом списке первым элементом.
         """
-        header = options.get('header', None)
-        table_data = options['data']
-        x, y = options['x'], options['y']
-        t = Table(table_data)
-        t.wrapOn(self.canvas, *self._page)
-        t.drawOn(self.canvas, x, y)
-        self.canvas.showPage()
+        pdfmetrics.registerFont(TTFont('DejaVuSerif','DejaVuSerif.ttf', 'UTF-8'))
+        table_style = TableStyle([
+            ('LINEABOVE', (0, 0), (-1, -1), 1, colors.black),
+            ('LINEBELOW', (0, 0), (-1, -1), 1, colors.black),
+            ('FONT', (0, 0), (-1, -1), 'DejaVuSerif'),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ])
+        table = Table(data)
+        table.setStyle(table_style)
+        self._story.append(table)
         return self
 
-    def add_image(self, **options):
+    def add_image(self, img):
         """
         Добавление изображения.
-        Аргумент image_as_bytes необходимо передавать в виде набора байтов.
+        img - изображение в виде потока байтов.
         """
-        raw_img = options.pop('image_as_bytes')
-        x, y = options.pop('x'), options.pop('y')
-        image = ImageReader(BytesIO(raw_img))
-        self.canvas.drawImage(image, x, y, **options)
+        image = Image(BytesIO(img), width=self._doc.width - 100, height=self._doc.height - 100)
+        self._story.append(image)
         return self
-
-    def test(self):
-        import plotly.express as px
-        fig = px.line([1,22,45,33], [13,44,91, 7])
-        raw = fig.to_image()
-        self.add_image(image_as_bytes=raw, x=20, y=20, width=400, height=100)
-        self.add_table(data=[[1,2,3],[4,5,6],[7,8,9]], x=50, y=50)
-        self.canvas.showPage()
     
     def save(self):
-        self.canvas.save()
+        self._doc.build(self._story)

@@ -70,6 +70,11 @@ class Order(DataframeFunc):
 
 
 class DfFilterDict:
+    """
+    Обёртка для фильтров датафреймов в виде словарей.
+    Используется для простого формирования и сложения фильтров в 
+    строках выражений.  
+    """
     def __init__(self, dff_dict):
         self._q = dff_dict
 
@@ -136,6 +141,24 @@ class Filter(DataframeFunc):
         else:
             filters = [f.df_filter for f in filters]
         return panda_builder.filter(args[0], filters)
+
+
+class DfQuery(DataframeFunc):
+    """
+    Функция выборки данных из датафрейма.
+    """
+    description = 'Функция выборки данных из датафрейма'
+    args_description = [
+        MandatoryArg('Датафрейм', 0),
+        MandatoryArg('Строка запроса', 1),
+    ]
+
+    @classmethod
+    def get_name(cls):
+        return 'df_query'
+
+    def _operation(self, *args):
+        return args[0].query(args[1])
 
 
 class AddColumn(DataframeFunc):

@@ -40,6 +40,7 @@ class ComponentsSchema:
             'names': base.get('names', ''),
             'line_group': base.get('line_group', ''),
             'barmode': base.get('barmode', ''),
+            'labels': base.get('labels', ''),
         })
 
         engine = options.get('engine', 'plotly')
@@ -151,13 +152,20 @@ class ReportTable(ReportComponent):
 
     @property
     def body(self):
-        return list(self.df.to_records())
+        recs = list(self.df.to_records(index=False))
+        return [list(r) for r in recs]
+
+    @property
+    def data_as_lists(self):
+        data = [self.header]
+        for r in self.body:
+            data.append(r)
+        return data
 
 
 class ReportFigure(ReportComponent):
     def __init__(self, **options):
         super().__init__(**options)
-        self._figure_type = options['figure_type']
         self._showlegend = options.get('showlegend', False)
         self._figure = None
         self._names = options.get('names', '')
@@ -165,6 +173,7 @@ class ReportFigure(ReportComponent):
         self._line_group = options.get('line_group', '')
         self._x_col, self._y_col = options.get('x', ''), options.get('y', '')
         self._barmode = options.get('barmode', '')
+        self._labels = options.get('labels', '')
 
     @property
     def figure(self):

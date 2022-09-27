@@ -14,6 +14,9 @@ class Context:
         self._current_context = self.global_context
         self._using_local = False
 
+    def clear_local(self):
+        self.local_context = {}
+
     def switch_to_global(self):
         """
         Переключение контекста на глобальный.
@@ -140,6 +143,24 @@ class GetConnection(Func):
     def _operation(self, *args):
         return args[0][args[1]]
 
+
+class GetFilterValue(Func):
+    """
+    Функция получения значения фильтра.
+    Используется на уровне интерпретатора.
+    """
+    group = 'context'
+    description = 'Функция контекста'
+    args_description = [
+        NonMandatoryArg('connections', 0),
+    ]
+
+    @classmethod
+    def get_name(cls):
+        return 'connection'
+
+    def _operation(self, *args):
+        return args[0][args[1]]
 
 _context_funcs = {
     GetFromContext.get_name(): GetFromContext,
