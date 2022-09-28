@@ -5,6 +5,9 @@
 import os
 
 
+_chinook_db_file = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/examples/chinook.db'
+
+
 # пример запроса в виде json
 jsq = {
     # базовая таблица
@@ -144,18 +147,18 @@ test_conf = {
     #  словарь с конфигурациями источников
     'sources': {
         'sqlite': {
-            'id': 'sqlite',
-            'from': 'json',
-            'type': 'sqlite',
-            'value': {
-                'dbname': os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/examples/chinook.db',
-            },
-        },
-        'test': {
-            'id': 'test',  # id источника
+            'id': 'sqlite', # id источника
 
             # формат данных, по которому будет создаваться источник:
             # json/conn_str/expression - словарь, строка подключения либо выражение
+            'from': 'json',
+            'type': 'sqlite',
+            'value': {
+                'dbname': _chinook_db_file,
+            },
+        },
+        'test': {
+            'id': 'test',
             'from': 'json',  
             'type': 'postgres',
             'value': {
@@ -172,7 +175,7 @@ test_conf = {
             'from': 'conn_str',
             'id': 'mysql',
             'type': 'mysql',
-            'value': 'host=localhost;database=test;user=max;port=3306;password=12345',
+            'value': 'host=localhost;database=test;user=user;port=3306;password=12345',
         },
 
         # здесь при создании источника будет использоваться выражение
@@ -180,20 +183,33 @@ test_conf = {
             'from': 'expression',
             'id': 'redis',
             'type': 'redis',
-            'value': 'create_connection("redis", "host=localhost;port=6379;database=1")',
+            'value': 'create_connection("redis", "host=localhost;port=6379;database=0")',
         },
     },
 
     # словарь с конфигурациями запросов к БД
     'queries': {
-        'film': {
-            'id': 'film',  # id запроса
-            'source': 'test',  # id источника
+        'sqlite': {
+            'id': 'sqlite',  # id запроса
+            'source': 'sqlite',  # id источника
 
             # формат данных, по которому будет создаваться запрос:
             # json/expression - словарь либо выражение
-            'from': 'json', # json/expression
+            'from': 'expression', # json/expression
 
+            # этот запрос будет формироваться из выражения
+            'value': 'sql_select("albums")',
+        },
+        'sqlite2': {
+            'id': 'sqlite2',
+            'source': 'sqlite',
+            'from': 'expression',
+            'value': 'sql_select("artists")',
+        },
+        'film': {
+            'id': 'film',
+            'source': 'test',
+            'from': 'json', 
             # этот запрос будет формироваться из словаря
             'value': {'base': 'film', 'tables': ['film']},
         },
@@ -201,7 +217,6 @@ test_conf = {
             'id': 'test3',
             'source': 'mysql',
             'from': 'expression',
-            # этот запрос будет формироваться из выражения
             'value': 'sql_select("titanic")',
         },
         'test1': {
@@ -222,26 +237,12 @@ test_conf = {
             'from': 'json',
             'value': jsq,
         },
-        'sqlite': {
-            'id': 'sqlite',
-            'source': 'sqlite',
-            'from': 'expression',
-            'value': 'sql_select("albums")',
-        },
     },
 
     #  словарь с конфигурациями датафреймов
     'dataframes': {
         'sqlite': {
-            'id': 'sqlite',
-            'base': {
-                'type': 'query',
-                'source': 'sqlite',
-                'value': 'sqlite',
-            },
-        },
-        'film': {
-            'id': 'film',  # id датафрейма
+            'id': 'sqlite',  # id датафрейма
 
             # конфигурация основы для датафрейма
             'base': {
@@ -250,17 +251,45 @@ test_conf = {
 
                 # этот датафрейм будет строиться по результатам запроса
                 'type': 'query',
-                #  'значение' основания - id запроса либо строка выражения
+                'source': 'sqlite',  # id источника - актуально при type=query
+                'value': 'sqlite',  #  'значение' основания - id запроса либо строка выражения
+            },
+            # список соединений
+            'joins': [
+                {
+                    'from': 'expression', # аналогично, формат/откуда берется датафрейм - другой датафрейм или выражение
+                    'value': 'dataframe(sql_execute(create_connection("sqlite", "database=' + _chinook_db_file + '"), sql_select("artists")))',
+                    'on': ['albums.ArtistId', 'artists.ArtistId', ],
+                    'type': 'inner',
+                },
+            ],
+            'unions': [
+                {
+                    'from': 'expression',  # значение приклеиваемого дф будет получено из выражения
+                    'value': 'dataframe(sql_execute(create_connection("sqlite", "database=' + _chinook_db_file + '"), sql_select("albums")))',
+                    #'dataframe(test5["city.city_id"])',
+                    #'from': 'dataframe',
+                    #'value': 'sqlite2',
+                }
+            ],
+        },
+        'sqlite2': {
+            'id': 'sqlite2',
+            'base': {
+                'type': 'query',
+                'source': 'sqlite',
+                'value': 'sqlite2',
+            },
+        },
+        'film': {
+            'id': 'film',
+            'base': {
+                'type': 'query',
                 'value': 'film',
-                'source': 'test',  # id источника - актуально при type=query
+                'source': 'test',  
             },
             # список конфигураций 'склеиваний' с датафреймом
             'unions': [
-                #{
-                    #  формат 'приклеиваемого' значения - датафрейм или выражение
-                    #'from': 'dataframe',  # склеиваться будет с другим датафреймом 
-                    #'value': 'test5',  # нужно указать id датафрейма
-                #},
                 {
                     'from': 'expression',  # значение приклеиваемого дф будет получено из выражения
                     'value': 'dataframe(test5["city.city_id"])',  

@@ -42,7 +42,7 @@ class Union(DataframeFunc):
         return 'df_union'
 
     def _operation(self, *args):
-        return panda_builder.union(args)
+        return panda_builder.union(list(args))
 
 
 class Order(DataframeFunc):

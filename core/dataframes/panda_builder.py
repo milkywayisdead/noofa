@@ -27,7 +27,7 @@ def union(dataframes_list):
     Склеивание датафреймов из списка.
     dataframes_list - список датафреймов pandas.
     """
-    result = pd.DataFrame()
+    result = dataframes_list.pop(0)
     for df in dataframes_list:
         result = pd.concat([result, df], ignore_index=True)
     return result

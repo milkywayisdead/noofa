@@ -242,6 +242,7 @@ class SqliteSource(DatabaseSource):
     """
     def __init__(self, **kwargs):
         self._db_file = kwargs.get('dbname')
+        self._conn_str = kwargs.get('conn_str', None)
         self.connection = None
 
     def get_tables(self):
@@ -254,6 +255,9 @@ class SqliteSource(DatabaseSource):
         return tables
 
     def get_connection(self, **kwargs):
+        if self._conn_str:
+            conn_dict = _parse_conn_str(self._conn_str)
+            return sqlite3.connect(conn_dict['database'])
         conn = sqlite3.connect(self._db_file)
         return conn
 
