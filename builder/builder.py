@@ -1,18 +1,18 @@
 """
 Инструмент построения отчётов.
 """
-from .core.func.errors import InterpreterContextError
-from .core.func import Interpreter
-from .components.dataschema import DataSchema
-from .components.components import ComponentsSchema
-from .core.dataframes import panda_builder
+from ..core.func.errors import InterpreterContextError
+from ..core.func import Interpreter
+from ..components.dataschema import DataSchema
+from ..components.components import ComponentsSchema
+from ..core.dataframes import panda_builder
 
 
 class ReportBuilder:
     """
     Формирователь отчётов.
     """
-    def __init__(self, config_dict={}, components_conf_dict={}):
+    def __init__(self, config_dict={}, components_conf_dict={}, set_evaluator=True):
         self._dataschema = DataSchema()  # схема данных
         self._components_schema = ComponentsSchema()  # схема компонентов
         self.interpreter = Interpreter()  # интерпретатор для вычисления формул
@@ -60,9 +60,16 @@ class ReportBuilder:
 
         # добавление датафреймов в схему
         for df in dataframes_config.values():
-            self._dataschema.add_dataframe(**df)
+            opts = {**df}
+            self._dataschema.add_dataframe(**opts)
 
-        # добавление компонентов в схему компонентов
+        # добавление компонентов в схему компонентов,
+        # если параметр set_evaluator равен True, то для компонентов
+        # в качестве параметра "вычислителя" задаётся сам ReportBuilder
+        if set_evaluator == True:
+            evaluator = self
+        else:
+            evaluator = None
         for c in components_conf_dict.values():
             type_ = c['type']
             if type_ == 'table':
@@ -70,7 +77,7 @@ class ReportBuilder:
             elif type_ == 'figure':
                 method = self._components_schema.add_figure
             lo = c.pop('layout')
-            method(**{**c, **lo})
+            method(using_evaluator=evaluator, **c, **lo)
 
     def evaluate(self, expr):
         """
@@ -196,17 +203,39 @@ class ReportBuilder:
         self._built_dataframes[df.id] = dataframe
         return dataframe
 
-    def build_table(self, table_id):
-        table = self._components_schema.get_table(table_id)
-        table.evaluator = self
+    def build_table(self, table):
+        """
+        Формирование компонента-таблицы.
+        table - id компонента в наборе таблиц схемы компонентов
+        либо экземпляр компонента-таблицы.
+        """
+        if isinstance(table, str):
+            table = self._components_schema.get_table(table)
+        #  если у компонента нет "объекта-вычислителя",
+        #  то им становится сам ReportBuilder    
+        if table.evaluator is None:
+            table.evaluator = self
         table.build()
         return table
 
-    def build_figure(self, figure_id):
-        figure = self._components_schema.get_figure(figure_id)
-        figure.evaluator = self
-        fig = figure.build()
-        return fig
+    def build_figure(self, figure):
+        """
+        Формирование компонента-графика.
+        figure - id компонента в наборе графиков схемы компонентов
+        либо экземпляр компонента-графика.
+        """
+        if isinstance(figure, str):
+            figure = self._components_schema.get_figure(figure)
+        if figure.evaluator is None:
+            figure.evaluator = self
+        _ = figure.build()
+        return figure
+
+    def build_component(self, component):
+        if isinstance(component, str):
+            component = self.get_component(component)
+        method = getattr(self, f'build_{component.type}')
+        return method(component)
 
     def df_to_dict(self, dataframe_id):
         """

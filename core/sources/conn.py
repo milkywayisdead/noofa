@@ -337,6 +337,9 @@ def get_source_class(type_):
 
 
 def _parse_conn_str(conn_str):
+    """
+    Парсинг строки соединения.
+    """
     if conn_str.endswith(';'):
         conn_str = conn_str[:-1]
     _ = ['host', 'port', 'database', 'user', 'password']

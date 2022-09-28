@@ -21,10 +21,15 @@ class ComponentsSchema:
         options.pop('type') if 'type' in options else 0
         table_id = options.pop('id')
         base = options.pop('base')
-        build_from, base_value = base.pop('from'), base.pop('value'),
+        build_from, base_value = base.pop('from'), base.pop('value')
+
+        #  необязательный параметр, определяющий объект "вычислителя"
+        using_evaluator = options.get('using_evaluator', None)
+
         self._tables[table_id] = ReportTable(
             id=table_id, type='table',
             build_from=build_from, base_value=base_value,
+            evaluator=using_evaluator,
             **options,
         )
 
@@ -33,6 +38,7 @@ class ComponentsSchema:
         figure_id = options.pop('id')
         base = options.pop('base')
         build_from, base_value = base['from'], base['value']
+        using_evaluator = options.get('using_evaluator', None)
         options.update({
             'x': base.get('x', ''),
             'y': base.get('y', ''),
@@ -49,6 +55,7 @@ class ComponentsSchema:
         self._figures[figure_id] = base_cls(
             id=figure_id, type='figure',
             build_from=build_from, base_value=base_value,
+            evaluator=using_evaluator,
             **options,
         )
 
@@ -66,13 +73,20 @@ class ComponentsSchema:
 
 
 class ReportComponent:
+    """
+    Базовый класс для компонентов отчёта.
+    """
     def __init__(self, **options):
         self.id = options['id']
-        self.type = options['type']  # chart, table, filter
+        self.type = options['type']  # chart, table
         self._build_from = options['build_from']
         self._base = options['base_value']
-        self._title_text = options.get('title_text', '')
+        self.title_text = options.get('title_text', '')
         self._title_font_size = options.get('title_font_size', 12)
+
+        #  "вычислитель" - объект, который будет вычислять результаты
+        #  в случае, когда base либо её части строятся из выражения ('expression');
+        #  этим объектом на данный момент должен быть экз. ReportBuilder из noofa.builder.
         self._evaluator = options.get('evaluator', None)
 
     @property
@@ -100,7 +114,7 @@ class ReportComponent:
 
 class ReportTable(ReportComponent):
     """
-    Таблица в компонентах отчёта.
+    Компонент-таблица.
     """
     def __init__(self, **options):
         super().__init__(**options)
@@ -148,15 +162,24 @@ class ReportTable(ReportComponent):
 
     @property
     def header(self):
+        """
+        Список наименований столбцов таблицы.
+        """
         return self.df.columns.to_list()
 
     @property
     def body(self):
+        """
+        Список списков значений соотв. строк таблицы.
+        """
         recs = list(self.df.to_records(index=False))
         return [list(r) for r in recs]
 
     @property
-    def data_as_lists(self):
+    def data(self):
+        """
+        Список списков значений ячеек таблицы, включая заголовок.
+        """
         data = [self.header]
         for r in self.body:
             data.append(r)
@@ -164,6 +187,12 @@ class ReportTable(ReportComponent):
 
 
 class ReportFigure(ReportComponent):
+    """
+    Базовый компонент-график. Не должен использоваться 
+    при создании компонентов. Компоненты создаются по
+    экземплярам наследуемых классов, в которых должен быть реализован
+    метод build - метод построения графика.
+    """
     def __init__(self, **options):
         super().__init__(**options)
         self._showlegend = options.get('showlegend', False)
@@ -180,31 +209,34 @@ class ReportFigure(ReportComponent):
         return self._figure
 
     def build(self):
+        """
+        Построение графика.
+        """
         pass
 
     def to_bytes(self):
+        """
+        График в виде потока байт.
+        График должен быть предварительно построен
+        при помощи метода build.
+        """
         return self.figure.to_image()
 
-    def _build_options(self):
-        return {
-            'from': self.build_from,
-            'title': self._title_text,
-            'title_font_size': self._title_font_size,
-            'showlegend': self._showlegend,
-            'names': self._names,
-            'x': self._x_col,
-            'y': self._y_col,
-            'line_group': self._line_group,
-        }
-
     def _update_layout(self):
+        """
+        Обновление компоновки/оформления графика.
+        """
         self.figure.update_layout(
             showlegend=self._showlegend,
-            title_text=self._title_text,
+            title_text=self.title_text,
             title_font_size=self._title_font_size,
         )
 
     def _eval_xy(self, from_, value):
+        """
+        Получение значений для осей x либо y по значениям параметров конфиги.
+        Используется при построении линейных графиков и столбчатых диаграмм.
+        """
         evaluator = self.evaluator
         if from_ == 'expression':
             res = evaluator.evaluate(value)
@@ -218,13 +250,26 @@ class ReportFigure(ReportComponent):
         return res
 
 
-class PlotlyFigure:
+class PlotlyMixin:
+    """
+    Доп. класс для компонентов-графиков plotly, при наследовании указывающий, что компонент 
+    является графиком на базе plotly, и реализующий методы
+    отображения данных по графику в виде словаря и сохранения в файл.
+    """
     @property
     def engine(self):
         return 'plotly'
 
+    def to_dict(self):
+        return self.figure.to_dict()
 
-class PlotlyLine(ReportFigure, PlotlyFigure):
+    def to_png(self, path):
+        if not path.endswith('.png'):
+            path += '.png'
+        self.figure.write_image(path)
+
+
+class PlotlyLine(ReportFigure, PlotlyMixin):
     """
     График с линиями с использованием plotly.
     """
@@ -266,7 +311,7 @@ class PlotlyLine(ReportFigure, PlotlyFigure):
         return self.figure
 
 
-class PlotlyPie(ReportFigure, PlotlyFigure):
+class PlotlyPie(ReportFigure, PlotlyMixin):
     """
     Круговая диаграмма с использованием plotly.
     """
@@ -291,9 +336,10 @@ class PlotlyPie(ReportFigure, PlotlyFigure):
         return self.figure
 
 
-class PlotlyBar(ReportFigure, PlotlyFigure):
+class PlotlyBar(ReportFigure, PlotlyMixin):
     """
     Столбчатая диаграмма с использованием plotly.
+    Вертикальная ориентация.
     """
     _orientation = 'v'
 
@@ -329,7 +375,7 @@ class PlotlyBar(ReportFigure, PlotlyFigure):
         return self.figure
 
 
-class PlotlyHbar(PlotlyBar, PlotlyFigure):
+class PlotlyHbar(PlotlyBar, PlotlyMixin):
     """
     Столбчатая диаграмма с использованием plotly.
     Горизонтальная ориентация.

@@ -361,9 +361,7 @@ components_conf = {
         #  информация по компоновке
         'layout': {
             # Заголовок таблицы, если нужно
-            'title': {
-                'text': 'Таблица1',
-            },
+            'title_text': 'Таблица1',
             # список столбцов датафрейма, которые исключаются при выводе
             'to_exclude': ['city.city_id', 'address.address_id', 'address.address2', 'address.city_id'],
 
@@ -512,4 +510,10 @@ components_conf = {
             'title_font_size': 18,
         },
     },
+}
+
+
+document_conf = {
+    #  список id компонентов, которые будут включены в pdf-документ
+    'components': ['fig2', 'table1', 'bar2', 'table1', 'bar'],
 }
