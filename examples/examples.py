@@ -516,4 +516,5 @@ components_conf = {
 document_conf = {
     #  список id компонентов, которые будут включены в pdf-документ
     'components': ['fig2', 'table1', 'bar2', 'table1', 'bar'],
+    'orientation': 'landscape',
 }

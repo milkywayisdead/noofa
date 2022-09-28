@@ -17,6 +17,7 @@ from reportlab.platypus import (
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.units import inch
 
 
 #  фикс для корректного отображения криллицы
@@ -29,6 +30,7 @@ class PdfReport:
     """
     def __init__(self, filename, **options):
         orientation = options.get('orientation', 'portrait')
+        self._orientation = orientation
         if orientation == 'landscape':
             pagesize = landscape(A4)
         else:
@@ -86,9 +88,13 @@ class PdfReport:
     def add_image(self, img):
         """
         Добавление изображения.
-        img - изображение в виде потока байтов.
+        img - изображение в виде последовательности байт.
         """
-        image = Image(BytesIO(img), width=self._doc.width - 100, height=self._doc.height - 100)
+        image = Image(BytesIO(img))
+        w, h = self._doc.width, self._doc.height
+        if self._orientation == 'landscape':
+            w, h = h, w
+        image._restrictSize(w, h)
         self._story.append(image)
         self.add_pagebreak()
         return self
@@ -108,7 +114,7 @@ class PdfReport:
         У компонентов-таблиц должно быть свойство data, возвращающее
         список списков значений для таблицы. У компонентов-графиков
         должен быть метод to_bytes, возвращающий изображение графика
-        в виде потока байт.
+        в виде байт.
         """
         for component in components_list:
             type_ = component.type
