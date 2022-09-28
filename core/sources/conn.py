@@ -1,5 +1,6 @@
 import json
 import redis
+import sqlite3
 import psycopg2
 import requests
 import mysql.connector
@@ -233,7 +234,72 @@ class MySqlSource(DatabaseSource):
         return fields
 
 
+class SqliteSource(DatabaseSource):
+    """
+    Источник sqlite. Используется для демонстрационной конфигурации -
+    noofa.examples. Не планируется использовать его как один из доступных
+    источников.
+    """
+    def __init__(self, **kwargs):
+        self._db_file = kwargs.get('dbname')
+        self.connection = None
+
+    def get_tables(self):
+        tables = []
+        cursor = self.connection.cursor()
+        q = "SELECT name FROM sqlite_master WHERE type='table';"
+        cursor.execute(q)
+        res = cursor.fetchall()
+        tables = [r[0] for r in res]
+        return tables
+
+    def get_connection(self, **kwargs):
+        conn = sqlite3.connect(self._db_file)
+        return conn
+
+    def open(self):
+        if self.connection is not None:
+            self.connection.close()
+        self.connection = self.get_connection()
+
+    def close(self):
+        self.connection.close()
+        self.connection = None
+
+    def get_data(self, **kwargs):
+        query = kwargs['query']
+        q, params = query.str_and_params()
+        fields = query.requested
+        data = []
+
+        cursor = self.connection.cursor()
+        if params:
+            cursor.execute(q, params)
+        else:
+            cursor.execute(q)
+
+        _data = cursor.fetchall()
+        desc = [f.replace('"', "") for f in fields]
+        for d in _data:
+            datapiece = {}
+            for n, i in enumerate(d):
+                datapiece[desc[n]] = i
+            data.append(datapiece)
+        return data
+
+    def get_fields(self, table_name, **kwargs):
+        fields = []
+        cursor = self.connection.cursor()
+        q = f"SELECT * from {table_name}"
+        cursor.execute(q)
+        fields = [description[0] for description in cursor.description]
+        return fields
+
+
 class RedisSource(DataSource):
+    """
+    Источник redis.
+    """
     def __init__(self, **kwargs):
         self._host = kwargs.get('host', 'localhost')
         self._port = kwargs.get('port', 6379)
@@ -288,6 +354,10 @@ class RedisSource(DataSource):
 
 
 class JsonSource(DataSource):
+    """
+    Источник из json-ответа.
+    Использование среди прочих источников под вопросом.
+    """
     def __init__(self, url, **kwargs):
         self._url = url
         self._params = kwargs.get('params', {})
@@ -329,6 +399,7 @@ SOURCES_DICT = {
     'mysql': MySqlSource,
     'redis': RedisSource,
     'json': JsonSource,
+    'sqlite': SqliteSource,
 }
 
 

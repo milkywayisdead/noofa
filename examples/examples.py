@@ -2,6 +2,8 @@
 Примеры json-объектов для построения различных объектов.
 """
 
+import os
+
 
 # пример запроса в виде json
 jsq = {
@@ -137,9 +139,18 @@ panda_filter = [
     },
 ]
 
+
 test_conf = {
     #  словарь с конфигурациями источников
     'sources': {
+        'sqlite': {
+            'id': 'sqlite',
+            'from': 'json',
+            'type': 'sqlite',
+            'value': {
+                'dbname': os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/examples/chinook.db',
+            },
+        },
         'test': {
             'id': 'test',  # id источника
 
@@ -211,10 +222,24 @@ test_conf = {
             'from': 'json',
             'value': jsq,
         },
+        'sqlite': {
+            'id': 'sqlite',
+            'source': 'sqlite',
+            'from': 'expression',
+            'value': 'sql_select("albums")',
+        },
     },
 
     #  словарь с конфигурациями датафреймов
     'dataframes': {
+        'sqlite': {
+            'id': 'sqlite',
+            'base': {
+                'type': 'query',
+                'source': 'sqlite',
+                'value': 'sqlite',
+            },
+        },
         'film': {
             'id': 'film',  # id датафрейма
 
@@ -516,5 +541,5 @@ components_conf = {
 document_conf = {
     #  список id компонентов, которые будут включены в pdf-документ
     'components': ['fig2', 'table1', 'bar2', 'table1', 'bar'],
-    'orientation': 'landscape',
+    'orientation': 'portrait',
 }
