@@ -275,12 +275,13 @@ class Filter:
     Фильтр (WHERE в запросе).
     """
 
-    def __init__(self, field_name, value):
+    def __init__(self, field_name, value, param_placeholder='%s'):
         self._field_name = field_name
         self._params = [value]
+        self._param_placeholder = param_placeholder
 
     def __str__(self):
-        return f"{self._field_name} {self.__class__.operator} %s"
+        return f"{self._field_name} {self.__class__.operator} {self._param_placeholder}"
 
 
 class EqFilter(Filter):
@@ -310,40 +311,43 @@ class LtFilter(Filter):
 class ContainsFilter(Filter):
     operator = 'LIKE'
 
-    def __init__(self, field_name, value):
+    def __init__(self, field_name, value, param_placeholder='%s'):
         self._field_name = field_name
         self._params = [f'%{value}%']
+        self._param_placeholder = param_placeholder
 
 
 class StartsWithFilter(Filter):
     operator = 'LIKE'
 
-    def __init__(self, field_name, value):
+    def __init__(self, field_name, value, param_placeholder='%s'):
         self._field_name = field_name
         self._params = [f'{value}%']
+        self._param_placeholder = param_placeholder
 
 
 class EndsWithFilter(Filter):
     operator = 'LIKE'
 
-    def __init__(self, field_name, value):
+    def __init__(self, field_name, value, param_placeholder='%s'):
         self._field_name = field_name
         self._params = [f'%{value}']
+        self._param_placeholder = param_placeholder
 
 
 class InFilter:
     """ IN """
 
-    def __init__(self, field_name, values_range):
+    def __init__(self, field_name, values_range, param_placeholder='%s'):
         self._field_name = field_name
         self._not = False
+        self._param_placeholder = param_placeholder
 
         if type(values_range) is SelectQuery:
             self._params = [p for p in values_range._params]
             self._subquery = values_range
         else:
-            #values_range = tuple(values_range)
-            self._params = values_range  #[values_range]
+            self._params = values_range
             self._subquery = None
 
     def __str__(self):
@@ -354,11 +358,17 @@ class InFilter:
         if self._subquery is not None:
             return f'{self._field_name} {operator} ({str(self._subquery)})'
         else:
+            placeholder = self._param_placeholder
             if self._params:
-                params_list = ', '.join(['%s']*len(self._params))
-                return f'{self._field_name} {operator} (%s)' % params_list
+                if placeholder == '?':
+                    params_list = ', '.join(placeholder*len(self._params))
+                    return f'{self._field_name} {operator} ({params_list})'
+                else:
+                    params_list = ', '.join([placeholder]*len(self._params))
+                print(f'{self._field_name} {operator} ({placeholder})', params_list)
+                return f'{self._field_name} {operator} ({placeholder})' % params_list
             else:
-                return f'{self._field_name} {operator} %s'
+                return f'{self._field_name} {operator} {placeholder}'
 
     def __neg__(self):
         self._not = not self._not
@@ -399,7 +409,7 @@ class Field:
         return NeqFilter(self._name_verbose, value)
 
     def __mod__(self, value):
-        return LikeFilter(self._name_verbose, value)
+        return ContainsFilter(self._name_verbose, value)
 
     def __rshift__(self, value):
         return InFilter(self._name_verbose, value)

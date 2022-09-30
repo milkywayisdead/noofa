@@ -28,7 +28,7 @@ class DataSchema:
         if conn is None:
             source_cls = get_source_class(type_)
             conn = source_cls(**options)
-        self._sources[id_] = SchemaSource(id_, connection=conn)
+        self._sources[id_] = SchemaSource(id_, connection=conn, type=type_)
         return self
 
     def add_query(self, **options):
@@ -75,6 +75,7 @@ class SchemaSource:
     Источник в схеме профиля.
     """
     def __init__(self, id_, **kwargs):
+        self.type = kwargs.get('type', '')
         self.id = id_
         self.connection = kwargs.get('connection', None)
 
@@ -146,7 +147,10 @@ class SchemaQuery:
         if not source.is_opened:
             source.open()
         tables = {t: source.get_table(t) for t in tables_list}
-        qbuilder = Qbuilder(tables, query)
+        qb_args = [tables, query]
+        if source.type == 'sqlite':
+            qb_args.append('?')
+        qbuilder = Qbuilder(*qb_args)
         return qbuilder.parse_query()
 
 

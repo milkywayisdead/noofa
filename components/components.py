@@ -339,9 +339,8 @@ class PlotlyPie(ReportFigure, PlotlyMixin):
 class PlotlyBar(ReportFigure, PlotlyMixin):
     """
     Столбчатая диаграмма с использованием plotly.
-    Вертикальная ориентация.
     """
-    _orientation = 'v'
+    _orientation = 'h'
 
     @property
     def orientation(self):
@@ -367,7 +366,7 @@ class PlotlyBar(ReportFigure, PlotlyMixin):
         elif build_from == 'dataframe':
             df_str, x_col, y_col = base['dataframe'], self._x_col, self._y_col
             df = self.evaluator.evaluate(df_str)
-            fig = px.bar(df, x=x_col, y=y_col)
+            fig = px.bar(df, x=x_col, y=y_col, orientation=orientation)
 
         self._figure = fig
         fig.update_layout(barmode=barmode)
@@ -376,11 +375,7 @@ class PlotlyBar(ReportFigure, PlotlyMixin):
 
 
 class PlotlyHbar(PlotlyBar, PlotlyMixin):
-    """
-    Столбчатая диаграмма с использованием plotly.
-    Горизонтальная ориентация.
-    """
-    _orientation = 'h'
+    _orientation = 'v'
 
 
 FIGURES = {

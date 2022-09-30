@@ -8,112 +8,6 @@ import os
 _chinook_db_file = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/examples/chinook.db'
 
 
-# пример запроса в виде json
-jsq = {
-    # базовая таблица
-    'base': 'category',  
-
-    # таблицы, используемые в запросе
-    'tables': ['category', 'film_category'],
-
-    # соединения таблиц  
-    'joins': [
-        {
-            #  левая таблица в соединении
-            'l': 'category',  # для первого соединения базовая таблица должна указываться левой
-            #  правая таблицы
-            'r': 'film_category', 
-            #  тип соединения
-            'j': 'inner', 
-            # по каким полям соединять
-            'on': {
-                'l': 'category_id',  # поле левой таблицы
-                'r': 'category_id'  # поле правой таблицы
-            }
-        },
-    ],
-
-    # фильтры where
-    'filters': [
-        # если в этом списке несколько фильтров, то они будут объединены через AND
-
-        #  простой фильтр (не состоящий из нескольких условий)
-        {
-            'is_complex': False, # составной ли фильтр
-            'table': 'category', # таблица
-            'field': 'category_id',  # поле 
-            'op': '==', # оператор
-            'value': 5, # значение 
-        },
-
-        # составной фильтр
-        {
-            'is_complex': True,  # это составной фильтр, т.е. в него входят несколько условий
-            'op': 'OR', #  оператор для объединения условий
-            #  список условий
-            'filters': [
-                {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': '>', 'value': 5},
-                {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': '<', 'value': 100},
-                {'is_complex': True, 'op': 'AND', 'filters': [
-                    {'is_complex': False, 'table': 'film_category', 'field': 'category_id', 'op': '>', 'value': 8},
-                    {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': '<', 'value': 10},
-                ]}
-            ]
-        },
-    ],
-
-    #  список полей, получаемых в запросе; если список пуст, то выбираются все поля
-    'values': [
-        {
-            'table': 'category',  # название таблицы
-            'field': 'last_update',  #  название поля
-        }
-    ],
-
-    #  сортировка
-    'order_by': [
-        {
-            'table': 'film_category',  # название таблицы
-            'fields': ['film_id'],  #  поля
-            'type': 'asc',
-        }
-    ],
-
-    #  количество выбираемых строк
-    'limit': 5,
-}
-
-# пример запроса с подзапросами в фильтрах IN
-jsq1 = {
-    'base': 'category',
-    'tables': ['category', 'film_category'],
-    'joins': [
-        {'l': 'category', 'r': 'film_category', 'j': 'inner', 'on': {'l': 'category_id', 'r': 'category_id'}},
-    ],
-    'filters': [
-        {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': 'in', 'value': {
-            'is_subquery': True,  # здесь указывается, что значение является подзапросом
-            'base': 'category',
-            'tables': ['category'],
-            'values': [{'table': 'category', 'field': 'category_id'}],
-        }},
-        {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': 'in', 'value': {
-            'is_subquery': True,
-            'base': 'category',
-            'tables': ['category'],
-            'values': [{'table': 'category', 'field': 'category_id'}],
-            'filters': [
-                {'is_complex': False, 'table': 'category', 'field': 'category_id', 'op': 'in', 'value': {
-                    'is_subquery': True,
-                    'base': 'category',
-                    'tables': ['category'],
-                    'values': [{'table': 'category', 'field': 'category_id'}],
-                }},
-            ]
-        }},
-    ],
-}
-
 # пример описания фильтра для датафрейма в json
 panda_filter = [
     {
@@ -157,34 +51,6 @@ test_conf = {
                 'dbname': _chinook_db_file,
             },
         },
-        'test': {
-            'id': 'test',
-            'from': 'json',  
-            'type': 'postgres',
-            'value': {
-                'host': 'localhost',
-                'port': 5432,
-                'dbname': 'reports',
-                'user': 'max',
-                'password': '12345',
-            },
-        },
-
-        # здесь при создании источника будет использоваться строка подключения
-        'mysql': {
-            'from': 'conn_str',
-            'id': 'mysql',
-            'type': 'mysql',
-            'value': 'host=localhost;database=test;user=user;port=3306;password=12345',
-        },
-
-        # здесь при создании источника будет использоваться выражение
-        'redis': {
-            'from': 'expression',
-            'id': 'redis',
-            'type': 'redis',
-            'value': 'create_connection("redis", "host=localhost;port=6379;database=0")',
-        },
     },
 
     # словарь с конфигурациями запросов к БД
@@ -206,36 +72,36 @@ test_conf = {
             'from': 'expression',
             'value': 'sql_select("artists")',
         },
-        'film': {
-            'id': 'film',
-            'source': 'test',
-            'from': 'json', 
-            # этот запрос будет формироваться из словаря
-            'value': {'base': 'film', 'tables': ['film']},
-        },
-        'test3': {
-            'id': 'test3',
-            'source': 'mysql',
-            'from': 'expression',
-            'value': 'sql_select("titanic")',
-        },
-        'test1': {
-            'id': 'test1',
-            'source': 'test',
+        'sqlite3': {
+            'id': 'sqlite3',
+            'source': 'sqlite',
             'from': 'json',
-            'value': {'base': 'city', 'tables': ['city']},
-        },
-        'test0': {
-            'id': 'test0',
-            'source': 'test',
-            'from': 'json',
-            'value': {'base': 'address', 'tables': ['address']},
-        },
-        'test2': {
-            'id': 'test2',
-            'source': 'test',
-            'from': 'json',
-            'value': jsq,
+            'value': {
+                'is_subquery': False,
+                'base': 'albums',
+                'tables': ['albums', 'artists', 'tracks'],
+                'joins': [
+                    {'l': 'albums', 'r': 'artists', 'j': 'inner', 'on': {'l': 'ArtistId', 'r': 'ArtistId'}},
+                    {'l': 'albums', 'r': 'tracks', 'j': 'inner', 'on': {'l': 'AlbumId', 'r': 'AlbumId'}},
+                ],
+                'filters': [
+                    {'is_complex': True, 'op': 'and', 'filters': [
+                        {'is_complex': False, 'table': 'albums', 'field': 'AlbumId', 'op': '>', 'value': 100},
+                        {'is_complex': False, 'table': 'albums', 'field': 'AlbumId', 'op': '<', 'value': 300},
+                    ]},
+                    #{'is_complex': False, 'table': 'albums', 'field': 'AlbumId', 'op': 'in', 'value': {
+                    #    'is_subquery': True, 'base': 'albums', 'tables': ['albums'], 'values': [{'table': 'albums', 'field': 'AlbumId'}],
+                    #}},
+                    #{'is_complex': False, 'table': 'albums', 'field': 'ArtistId', 'op': 'in', 'value': [19, 21]},
+                ],
+                'values': [
+                    #{'table': 'albums', 'field': 'Title'}, {'table': 'artists', 'field': 'Name'}
+                ],
+                'order_by': [
+                    {'table': 'albums', 'fields': ['Title'], 'type': 'asc'},
+                ],
+                'limit': 100,
+            },
         },
     },
 
@@ -263,137 +129,26 @@ test_conf = {
                     'type': 'inner',
                 },
             ],
-            'unions': [
-                {
-                    'from': 'expression',  # значение приклеиваемого дф будет получено из выражения
-                    'value': 'dataframe(sql_execute(create_connection("sqlite", "database=' + _chinook_db_file + '"), sql_select("albums")))',
+            'unions': [],                #{
+                #    'from': 'expression',  # значение приклеиваемого дф будет получено из выражения
+                #    'value': 'dataframe(sql_execute(create_connection("sqlite", "database=' + _chinook_db_file + '"), sql_select("albums")))',
                     #'dataframe(test5["city.city_id"])',
                     #'from': 'dataframe',
                     #'value': 'sqlite2',
-                }
-            ],
+                #}ery',
+                #'source': 'sqlite',
+                #'value': 'sqlite2',
         },
-        'sqlite2': {
-            'id': 'sqlite2',
+        'sqlite3': {
+            'id': 'sqlite3',
             'base': {
                 'type': 'query',
                 'source': 'sqlite',
-                'value': 'sqlite2',
-            },
-        },
-        'film': {
-            'id': 'film',
-            'base': {
-                'type': 'query',
-                'value': 'film',
-                'source': 'test',  
-            },
-            # список конфигураций 'склеиваний' с датафреймом
-            'unions': [
-                {
-                    'from': 'expression',  # значение приклеиваемого дф будет получено из выражения
-                    'value': 'dataframe(test5["city.city_id"])',  
-                }
-            ],
-            # список соединений
-            'joins': [
-                {
-                    'from': 'expression',  # аналогично, формат/откуда берется датафрейм - другой датафрейм или выражение
-                    'value': 'dataframe(sql_execute(create_connection("postgres", "database=reports;user=max;password=12345;"), sql_select("address")))',
-                    'on': ['city.city_id', 'address.city_id', ],
-                    'type': 'inner',
-                },
-            ],
-            # список фильтров
-            'filters': [
-                {
-                    'from': 'json',
-                    'value': {
-                        'is_q': False,
-                        'col_name': 'city.city_id',
-                        'op': '>',
-                        'value': 10,
-                    },
-                },
-                {
-                    'from': 'expression',
-                    'value': 'df_filter("city.city_id", "<", 20)',
-                },
-            ],
-            'ordering': [],
-            'columns': [],
-        },
-        'test': {
-            'id': 'test5',
-            'base': {
-                'type': 'query',
-                'value': 'test1',
-                'source': 'test',
-            },
-        },
-        'test0': {
-            'id': 'test0',
-            'base': {
-                'type': 'query',
-                'value': 'test0',
-                'source': 'mysql',
-            },
-        },
-        'testjoin': {
-            'id': 'testjoin',
-            'base': {
-                'type': 'expression',
-                'value': 'df_join(test0, test5, "address.city_id", "city.city_id", "inner")',
+                'value': 'sqlite3',
             },
             'filters': [
-                {
-                    'from': 'json',
-                    'value': {
-                        'col_name': 'city.city_id',
-                        'op': '>',
-                        'value': 12,
-                        'is_q': False,
-                    },
-                },
-                {
-                    'from': 'json',
-                    'value': {
-                        'is_q': True,
-                        'op': 'or',
-                        'filters': [
-                            {
-                                'col_name': 'address.city_id',
-                                'op': '>',
-                                'value': 20,
-                                'is_q': False,
-                            },
-                            {
-                                'col_name': 'city.city_id',
-                                'op': '<',
-                                'value': 100,
-                                'is_q': False,
-                            },
-                        ],
-                    },
-                },
-            ],
-            'ordering': {
-                'asc': True,
-                'cols': ['city.city_id'],
-            },
-            #  список конф. изменений либо добавлений столбцов
-            'columns': [
-                {
-                    #  источник значений - выражение (expression), применение выражения к строкам датафрейма (apply)
-                    'from': 'expression',
-                    'name': 'test111',
-                    'value': '11',
-                },
-                {
-                    'from': 'apply',
-                    'name': 'test1112',
-                    'value': 'row["city.city_id"] * idx',
-                },
+                #{'from': 'json', 'value': {'is_q': False, 'col_name': 'tracks.Milliseconds', 'op': '>', 'value': 200000}},
+                {'from': 'expression', 'value': 'df_filter("tracks.Milliseconds", ">", 200000) & df_filter("tracks.Milliseconds", "<", 300000)'},
             ],
         },
     },
@@ -410,24 +165,25 @@ components_conf = {
         'base': {
             #  откуда берутся данные - датафрейм/выражение
             'from': 'dataframe',  # dataframe/expression/json
-            'value': 'testjoin',
+            'value': 'sqlite3',
         },
         #  информация по компоновке
         'layout': {
             # Заголовок таблицы, если нужно
             'title_text': 'Таблица1',
             # список столбцов датафрейма, которые исключаются при выводе
-            'to_exclude': ['city.city_id', 'address.address_id', 'address.address2', 'address.city_id'],
+            'to_exclude': [],
 
             # словарь для переименования столбцов;
             # формат {'название_существующего_столбца1': 'новое_название_столбца', ...}
             'aliases': {
-                'city.city': 'город',
+                'artists.Name': 'Исполнитель',
+                'albums.Title': 'Альбом',
             },
         },
     },
-    'figure1': {
-        'id': 'fig1',
+    'lines': {
+        'id': 'lines',
         'type': 'figure',  # график
         'engine': 'plotly',  # "движок" - библиотека, которая будет исп. при построении графика
         'figure_type': 'line',  # тип графика
@@ -435,47 +191,47 @@ components_conf = {
             'from': 'list',  # формат данных, в этом случае - набор отдельных линий
             'value': [
                 {
-                    'name': 'Alberta',
+                    'name': 'U2',
                     'x_from': 'expression',
-                    'x': 'get_column(filter(test0, df_filter("address.district", "==", "Alberta")), "address.address_id")',
+                    'x': 'get_column(filter(sqlite3, df_filter("artists.Name", "==", "U2")), "tracks.TrackId")',
                     'y_from': 'column',
-                    'y': {'df_from': 'expression', 'dataframe': 'filter(test0, df_filter("address.district", "==", "Alberta"))', 'column': 'address.phone'},
+                    'y': {'df_from': 'expression', 'dataframe': 'filter(sqlite3, df_filter("artists.Name", "==", "U2"))', 'column': 'tracks.Bytes'},
                 },
                 {
-                    'name': 'QLD',
+                    'name': 'Soundgarden',
                     'x_from': 'column',
-                    'x': {'df_from': 'expression', 'dataframe': 'filter(test0, df_filter("address.district", "==", "QLD"))', 'column': "address.address_id"},
+                    'x': {'df_from': 'expression', 'dataframe': 'filter(sqlite3, df_filter("artists.Name", "==", "Soundgarden"))', 'column': 'tracks.TrackId'},
                     'y_from': 'expression',
-                    'y': 'get_column(filter(test0, df_filter("address.district", "==", "QLD")), "address.phone")',
+                    'y': 'get_column(filter(sqlite3, df_filter("artists.Name", "==", "Soundgarden")), "tracks.Bytes")',
                 },
             ],
         },
         'layout': {
             'showlegend': True,
-            'title_text': 'Графег1',
+            'title_text': 'Линии',
             'title_font_size': 12,
         },
     },
-    'figure2': {
-        'id': 'fig2',
+    'lines2': {
+        'id': 'lines2',
         'type': 'figure',
         'engine': 'plotly',
         'figure_type': 'line',
         'base': {
             'from': 'grouped',  # формат данных, в этом случае - набор отдельных линий
-            'value': {'df_from': 'dataframe', 'dataframe': 'test0'},
-            'line_group': 'address.district',
-            'x': 'address.address_id',
-            'y': 'address.phone',
+            'value': {'df_from': 'expression', 'dataframe': 'df_head(sqlite3, 50)'},
+            'line_group': 'artists.Name',
+            'x': 'tracks.TrackId',
+            'y': 'tracks.Milliseconds',
         },
         'layout': {
             'showlegend': True,
-            'title_text': 'Графег2',
+            'title_text': 'Линии2',
             'title_font_size': 12,
         },
     },
-    'figure3': {
-        'id': 'fig3',
+    'pie': {
+        'id': 'pie',
         'type': 'figure',
         'engine': 'plotly',
         'figure_type': 'pie',
@@ -483,39 +239,43 @@ components_conf = {
             'from': 'list',
             'value': [
                 {
-                    'value': 'mean(test0["address.address_id"])',
-                    'name': 'Жужа' 
+                    'value': 'min(sqlite3["tracks.Milliseconds"]/1000)',
+                    'name': 'Мин. длительность' 
                 },
                 {
-                    'value': 'min(test0["address.address_id"])',
-                    'name': 'Жожа' 
+                    'value': 'max(sqlite3["tracks.Milliseconds"]/1000)',
+                    'name': 'Макс. длительность' 
+                },
+                {
+                    'value': 'mean(sqlite3["tracks.Milliseconds"]/1000)',
+                    'name': 'Средняя длительность' 
                 },
             ],
         },
         'layout': {
             'showlegend': True,
-            'title_text': 'Графег2',
-            'title_font_size': 12,
+            'title_text': 'Пирог1',
+            'title_font_size': 30,
         },
     },
-    'figure4': {
-        'id': 'fig4',
+    'pie2': {
+        'id': 'pie2',
         'type': 'figure',
         'engine': 'plotly',
         'figure_type': 'pie',
         'base': {
             'from': 'dataframe',
-            'value': {'df_from': 'dataframe', 'dataframe': 'df_head(test0, 10)'},
-            'values': 'address.address_id',
-            'names': 'address.district',
+            'value': {'df_from': 'dataframe', 'dataframe': 'sqlite3'},
+            'values': 'tracks.UnitPrice',
+            'names': 'tracks.Name',
         },
         'layout': {
             'showlegend': True,
-            'title_text': 'Графег2',
+            'title_text': 'Пирог2',
             'title_font_size': 18,
         },
     },
-    'figure4': {
+    'bar': {
         'id': 'bar',
         'type': 'figure',
         'engine': 'plotly',
@@ -526,16 +286,16 @@ components_conf = {
                 {
                     'x_from': 'column',
                     'y_from': 'expression',
-                    'x': {'df_from': 'expression', 'dataframe': 'filter(test0, df_filter("address.district", "==", "QLD"))', 'column': "address.district"},
-                    'y': 'test0["address.address_id"]',
-                    'name': 'b52',
+                    'x': {'df_from': 'expression', 'dataframe': 'sqlite3', 'column': "tracks.Name"},
+                    'y': 'sqlite3["tracks.Milliseconds"]',
+                    'name': 'Длительность',
                 },
                 {
                     'x_from': 'expression',
                     'y_from': 'expression',
-                    'x': 'test0["address.district"]',
-                    'y': 'test0["address.address_id"]',
-                    'name': 'b53',
+                    'x': 'sqlite3["tracks.Name"]',
+                    'y': 'sqlite3["tracks.Bytes"]',
+                    'name': 'Bytes',
                 },
             ],
             'barmode': 'relative',
@@ -546,16 +306,16 @@ components_conf = {
             'title_font_size': 18,
         },
     },
-    'figure5': {
+    'bar2': {
         'id': 'bar2',
         'type': 'figure',
         'engine': 'plotly',
-        'figure_type': 'hbar',
+        'figure_type': 'bar',
         'base': {
             'from': 'dataframe',
-            'value': {'df_from': 'dataframe', 'dataframe': 'df_head(test0, 8)'},
-            'y': 'address.district',
-            'x': 'address.address_id',
+            'value': {'df_from': 'dataframe', 'dataframe': 'sqlite3'},
+            'y': 'tracks.Name',
+            'x': 'tracks.Milliseconds',
             'barmode': 'relative',
         },
         'layout': {
@@ -569,6 +329,6 @@ components_conf = {
 
 document_conf = {
     #  список id компонентов, которые будут включены в pdf-документ
-    'components': ['fig2', 'table1', 'bar2', 'table1', 'bar'],
-    'orientation': 'portrait',
+    'components': ['lines2', 'table1', 'pie', 'pie2', 'bar', 'bar2'],
+    'orientation': 'landscape',
 }

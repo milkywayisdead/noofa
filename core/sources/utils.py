@@ -15,8 +15,8 @@ _FILTERS = {
     '<': query.LtFilter,
     '<=': query.LeFilter,
     'contains': query.ContainsFilter,
-    'endswith': query.StartsWithFilter,
-    'startswith': query.EndsWithFilter,
+    'startswith': query.StartsWithFilter,
+    'endswith': query.EndsWithFilter,
     'in': query.InFilter,
 }
 
@@ -73,7 +73,7 @@ class Qbuilder:
     # В конструктов передаются:
     # словарь используемых в запросе таблиц вида {название таблицы: объект Table}
     # и запрос в виде словаря
-    def __init__(self, tables, query):
+    def __init__(self, tables, query, param_placeholder='%s'):
         self._source = None  # источник данных
         self._base = query['base']
         self._tables = tables  # словарь таблиц
@@ -87,6 +87,7 @@ class Qbuilder:
             int(self._limit)
         except:
             self._limit = None
+        self._param_placeholder = param_placeholder
 
     def parse_joins(self):
         """
@@ -115,7 +116,7 @@ class Qbuilder:
             _filter = _FILTERS.get(f['op'], None)
             if _filter:
                 val = f['value']
-                # парсить подзапрос
+                # парсить подзапрос, если он является значением фильтра
                 try:
                     is_subquery = val['is_subquery']
                 except:
@@ -133,7 +134,7 @@ class Qbuilder:
                     field_name = f'"{table_name}"."{field_name}"'
                 else:
                     field_name = f'{table_name}.{field_name}'
-                _filter = _filter(field_name, val)
+                _filter = _filter(field_name, val, param_placeholder=self._param_placeholder)
                 return query.Q(_filter)
         else:
             op = f['op'].lower()
