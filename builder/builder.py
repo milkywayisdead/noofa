@@ -114,6 +114,12 @@ class ReportBuilder:
         return query
 
     def get_data(self, query_id):
+        """
+        Получение данных по запросу.
+        query_id - id запроса.
+        Если данные имеются в self._result, то будут возвращены они,
+        в противном случае выполняется запрос, после чего рез. вносится в self._results. 
+        """
         if query_id in self._results:
             return self._results[query_id]
         query = self.get_query(query_id)
@@ -126,11 +132,15 @@ class ReportBuilder:
         """
         Получить сформированный либо сформировать датафрейм.
         """
+
+        #  пробуем получить готовый дф, если его нет, то собираем с нуля
         df = self._built_dataframes.get(dataframe_id, None)
-        if df is not None:
-            return df
-        else:
-            return self.build_dataframe(dataframe_id)
+        if df is None:
+            df = self.build_dataframe(dataframe_id)
+
+        #  добавляем в словарь готовых дф для возможного последующего использования
+        self._built_dataframes[df.id] = df
+        return df
 
     def build_base(self, dataframe_id):
         """
@@ -199,8 +209,6 @@ class ReportBuilder:
             ordering = df.ordering
             cols, asc = ordering['cols'], ordering['asc']
             dataframe = panda_builder.order_by(dataframe, cols, asc=asc)
-
-        self._built_dataframes[df.id] = dataframe
         return dataframe
 
     def build_table(self, table):
