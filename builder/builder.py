@@ -139,7 +139,7 @@ class ReportBuilder:
             df = self.build_dataframe(dataframe_id)
 
         #  добавляем в словарь готовых дф для возможного последующего использования
-        self._built_dataframes[df.id] = df
+        self._built_dataframes[dataframe_id] = df
         return df
 
     def build_base(self, dataframe_id):

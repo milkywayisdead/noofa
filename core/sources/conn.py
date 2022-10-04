@@ -33,6 +33,13 @@ class DataSource(ABC):
     def is_sql(self):
         return self.__class__._is_sql
 
+    def __enter__(self):
+        self.open()
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.close()
+
 
 class DatabaseSource(DataSource):
     _is_sql = True

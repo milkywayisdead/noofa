@@ -185,6 +185,14 @@ class ReportTable(ReportComponent):
             data.append(r)
         return data
 
+    def to_dict(self):
+        return {
+            'header': self.header,
+            'body': self.body,
+            'title': self.title_text,
+            'id': self.id,
+        }
+
 
 class ReportFigure(ReportComponent):
     """
@@ -261,7 +269,11 @@ class PlotlyMixin:
         return 'plotly'
 
     def to_dict(self):
-        return self.figure.to_dict()
+        return {
+            'data': self.figure.to_dict(),
+            'title': self.title_text,
+            'id': self.id,
+        }
 
     def to_png(self, path):
         if not path.endswith('.png'):
