@@ -1,8 +1,8 @@
 """
 Примеры json-объектов для построения различных объектов.
 """
-
 import os
+import json
 
 
 _chinook_db_file = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/examples/chinook.db'
@@ -331,4 +331,11 @@ document_conf = {
     #  список id компонентов, которые будут включены в pdf-документ
     'components': ['lines2', 'table1', 'pie', 'pie2', 'bar', 'bar2'],
     'orientation': 'landscape',
+}
+
+
+configs = {
+    'data': json.dumps(test_conf),
+    'components': json.dumps(components_conf),
+    'document_conf': json.dumps(document_conf),
 }

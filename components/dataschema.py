@@ -100,6 +100,7 @@ class SchemaSource:
         """
         Построение объекта таблицы по имени.
         """
+        self.open()
         return self.connection.get_table(table_name)
 
     @property
