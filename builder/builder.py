@@ -1,11 +1,15 @@
 """
 Инструмент построения отчётов.
 """
+from collections import deque
+
 from ..core.func.errors import InterpreterContextError
 from ..core.func import Interpreter
 from ..components.dataschema import DataSchema
 from ..components.components import ComponentsSchema
 from ..core.dataframes import panda_builder
+from .stack import DfStack
+from .exceptions import RecursiveDataframeBuildError
 
 
 class ReportBuilder:
@@ -20,10 +24,11 @@ class ReportBuilder:
         self._compiled_queries = {}  #  сформированные запросы
         self._built_dataframes = {}  #  сформированные датафреймы
         self._results = {}  #  результаты запросов (полученные данные)
+        self._df_stack = DfStack()  # стэк id строящихся датафреймов
+
         sources_conf = config_dict.get('sources', {})
         queries_config = config_dict.get('queries', {})
         dataframes_config = config_dict.get('dataframes', {})
-
         """
         добавление источников в схему:
         источники добавляются из словаря (json) либо из строки подключения (conn_str)
@@ -132,6 +137,11 @@ class ReportBuilder:
         """
         Получить сформированный либо сформировать датафрейм.
         """
+        current_df = self._df_stack.current
+        if current_df == dataframe_id:
+            self._df_stack.clear()
+            raise RecursiveDataframeBuildError(dataframe_id)
+        self._df_stack.current = dataframe_id
 
         #  пробуем получить готовый дф, если его нет, то собираем с нуля
         df = self._built_dataframes.get(dataframe_id, None)
@@ -140,6 +150,12 @@ class ReportBuilder:
 
         #  добавляем в словарь готовых дф для возможного последующего использования
         self._built_dataframes[dataframe_id] = df
+
+        try:
+            self._df_stack.pop()
+        except:
+            pass
+
         return df
 
     def build_base(self, dataframe_id):

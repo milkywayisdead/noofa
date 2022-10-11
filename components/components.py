@@ -1,10 +1,12 @@
 """
 Классы графических компонентов отчёта.
 """
+from mysqlx import Schema
 import plotly.express as px
 import plotly.graph_objects as go
 
 from ..core.dataframes.panda_builder import pd
+from .exceptions import SchemaComponentNotFound
 
 
 class ComponentsSchema:
@@ -62,14 +64,23 @@ class ComponentsSchema:
     def get_component(self, component_id):
         try:
             return self.get_table(component_id)
-        except KeyError:
-            return self.get_figure(component_id)
+        except SchemaComponentNotFound:
+            try:
+                return self.get_figure(component_id)
+            except:
+                raise SchemaComponentNotFound(component_id, '_')
 
     def get_table(self, table_id):
-        return self._tables[table_id]
+        table = self._tables.get(table_id, None)
+        if table is None:
+            raise SchemaComponentNotFound(table_id, 'table')
+        return table
 
     def get_figure(self, figure_id):
-        return self._figures[figure_id]
+        figure = self._figures.get(figure_id, None)
+        if figure is None:
+            raise SchemaComponentNotFound(figure_id, 'figure')
+        return figure
 
 
 class ReportComponent:

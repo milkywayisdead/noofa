@@ -4,6 +4,7 @@
 from pandas import DataFrame
 
 from ..core import collect_tables, get_source_class, Qbuilder
+from .exceptions import SchemaComponentNotFound
 
 
 class DataSchema:
@@ -61,13 +62,22 @@ class DataSchema:
         return self     
 
     def get_source(self, source_id):
-        return self._sources[source_id]
+        source = self._sources.get(source_id, None)
+        if source is None:
+            raise SchemaComponentNotFound(source_id, 'source')
+        return source
 
     def get_query(self, query_id):
-        return self._queries[query_id]
+        q = self._queries.get(query_id, None)
+        if q is None:
+            raise SchemaComponentNotFound(query_id, 'query')
+        return q
 
     def get_dataframe(self, df_id):
-        return self._dataframes[df_id]
+        df = self._dataframes.get(df_id, None)
+        if df is None:
+            raise SchemaComponentNotFound(df_id, 'df')
+        return df
 
 
 class SchemaSource:

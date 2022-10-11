@@ -5,3 +5,6 @@ from .core.func.errors import (
     NotEnoughArguments,
     InterpreterContextError,
 )
+
+from .components.exceptions import SchemaComponentNotFound
+from .builder.exceptions import RecursiveDataframeBuildError
