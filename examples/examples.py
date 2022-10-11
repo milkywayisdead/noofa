@@ -331,14 +331,4 @@ document_conf = {
     #  список id компонентов, которые будут включены в pdf-документ
     'components': ['lines2', 'table1', 'pie', 'pie2', 'bar', 'bar2'],
     'orientation': 'landscape',
-<<<<<<< HEAD
-}
-
-
-configs = {
-    'data': json.dumps(test_conf),
-    'components': json.dumps(components_conf),
-    'document_conf': json.dumps(document_conf),
-=======
->>>>>>> c30d20b47bd90fa29cff2d3bc5a5d90e0caf5c6e
 }
