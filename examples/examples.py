@@ -2,7 +2,6 @@
 Примеры json-объектов для построения различных объектов.
 """
 import os
-import json
 
 
 _chinook_db_file = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/examples/chinook.db'

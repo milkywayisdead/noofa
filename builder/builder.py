@@ -1,14 +1,11 @@
 """
 Инструмент построения отчётов.
 """
-from collections import deque
-
 from ..core.func.errors import InterpreterContextError
 from ..core.func import Interpreter
 from ..components.dataschema import DataSchema
 from ..components.components import ComponentsSchema
 from ..core.dataframes import panda_builder
-from .stack import DfStack
 from .exceptions import RecursiveDataframeBuildError
 
 
@@ -16,7 +13,7 @@ class ReportBuilder:
     """
     Формирователь отчётов.
     """
-    def __init__(self, config_dict={}, components_conf_dict={}, set_evaluator=True):
+    def __init__(self, config_dict={}, components_conf_dict={}, set_evaluator=True, *args, **kwargs):
         self._dataschema = DataSchema()  # схема данных
         self._components_schema = ComponentsSchema()  # схема компонентов
         self.interpreter = Interpreter()  # интерпретатор для вычисления формул
@@ -24,7 +21,7 @@ class ReportBuilder:
         self._compiled_queries = {}  #  сформированные запросы
         self._built_dataframes = {}  #  сформированные датафреймы
         self._results = {}  #  результаты запросов (полученные данные)
-        self._df_stack = DfStack()  # стэк id строящихся датафреймов
+        self._df_stack = []  #  стэк id строящихся датафреймов
 
         sources_conf = config_dict.get('sources', {})
         queries_config = config_dict.get('queries', {})
@@ -137,11 +134,15 @@ class ReportBuilder:
         """
         Получить сформированный либо сформировать датафрейм.
         """
-        current_df = self._df_stack.current
-        if current_df == dataframe_id:
-            self._df_stack.clear()
+
+        # проверка на рекурсивные вызовы при построении -
+        # если в конфиге задано построение дф по своим же данным,
+        # то выбрасывается ошибка
+        if dataframe_id in self._df_stack:
+            self._df_stack.clear()  # очистить стэк дф в случае ошибки
             raise RecursiveDataframeBuildError(dataframe_id)
-        self._df_stack.current = dataframe_id
+
+        self._df_stack.append(dataframe_id)  # кладём id дф в стэк
 
         #  пробуем получить готовый дф, если его нет, то собираем с нуля
         df = self._built_dataframes.get(dataframe_id, None)
@@ -151,11 +152,9 @@ class ReportBuilder:
         #  добавляем в словарь готовых дф для возможного последующего использования
         self._built_dataframes[dataframe_id] = df
 
-        try:
-            self._df_stack.pop()
-        except:
-            pass
-
+        # удаляем id дф из стэка
+        self._df_stack.pop()
+        
         return df
 
     def build_base(self, dataframe_id):

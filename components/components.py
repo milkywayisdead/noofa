@@ -1,7 +1,6 @@
 """
 Классы графических компонентов отчёта.
 """
-from mysqlx import Schema
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -25,7 +24,7 @@ class ComponentsSchema:
         base = options.pop('base')
         build_from, base_value = base.pop('from'), base.pop('value')
 
-        #  необязательный параметр, определяющий объект "вычислителя"
+        #  необязательный параметр, определяющий объект "вычислителя" выражений
         using_evaluator = options.get('using_evaluator', None)
 
         self._tables[table_id] = ReportTable(

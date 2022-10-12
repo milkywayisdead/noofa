@@ -134,8 +134,9 @@ class CachingReportBuilder(ReportBuilder):
         query_result - результат запроса в виде списка словарей,
         ex - время хранения в кэше в секундах.
         """
-        value = json.dumps(query_result)
-        self._set(query_id, value, value_type='query', ex=ex)
+        if isinstance(query_result, list):
+            query_result = json.dumps(query_result)
+        self._set(query_id, query_result, value_type='query', ex=ex)
 
     def get_cached_query_result(self, query_id):
         """
