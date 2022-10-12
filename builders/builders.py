@@ -2,6 +2,7 @@
 Инструменты построения отчётов.
 """
 import json
+import redis
 
 from ..core.func.errors import InterpreterContextError
 from ..core.func import Interpreter
@@ -15,7 +16,7 @@ class ReportBuilder:
     """
     Формирователь отчётов.
     """
-    def __init__(self, config_dict={}, components_conf_dict={}, set_evaluator=True, *args, **kwargs):
+    def __init__(self, data_config={}, components_config={}, set_evaluator=True, *args, **kwargs):
         self._dataschema = DataSchema()  # схема данных
         self._components_schema = ComponentsSchema()  # схема компонентов
         self.interpreter = Interpreter()  # интерпретатор для вычисления формул
@@ -25,9 +26,9 @@ class ReportBuilder:
         self._results = {}  #  результаты запросов (полученные данные)
         self._df_stack = []  #  стэк id строящихся датафреймов
 
-        sources_conf = config_dict.get('sources', {})
-        queries_config = config_dict.get('queries', {})
-        dataframes_config = config_dict.get('dataframes', {})
+        sources_conf = data_config.get('sources', {})
+        queries_config = data_config.get('queries', {})
+        dataframes_config = data_config.get('dataframes', {})
         """
         добавление источников в схему:
         источники добавляются из словаря (json) либо из строки подключения (conn_str)
@@ -74,7 +75,7 @@ class ReportBuilder:
             evaluator = self
         else:
             evaluator = None
-        for c in components_conf_dict.values():
+        for c in components_config.values():
             type_ = c['type']
             if type_ == 'table':
                 method = self._components_schema.add_table
@@ -295,9 +296,9 @@ class CachingReportBuilder(ReportBuilder):
     """
     def __init__(self, *args, **kwargs):
         defaults = {
-            'host': 'localhost',
-            'port': 6379,
-            'db': 0,
+            'redis_host': 'localhost',
+            'redis_port': 6379,
+            'redis_db': 0,
             'ex': 300,
             'prefix': 'profile0',
         }
@@ -306,9 +307,9 @@ class CachingReportBuilder(ReportBuilder):
                 defaults[kw] = kwargs.pop(kw)
 
         super().__init__(*args, **kwargs)
-        self._redis_host = defaults['host']
-        self._redis_port = defaults['port']
-        self._redis_db = defaults['db']
+        self._redis_host = defaults['redis_host']
+        self._redis_port = defaults['redis_port']
+        self._redis_db = defaults['redis_db']
         self._prefix = defaults['prefix']
         self._ex = defaults['ex']  # время жизни кэшированных записей в секундах
         self._conn = None
@@ -318,7 +319,10 @@ class CachingReportBuilder(ReportBuilder):
         df = self._built_dataframes.get(dataframe_id, None)
         #  если его нет, то пробуем построить его по данным из кэша
         if df is None:
-            cached_df = self.get_cached_df(dataframe_id)
+            try:
+                cached_df = self.get_cached_df(dataframe_id)
+            except:
+                cached_df = None
             if cached_df:
                 df = panda_builder.new(cached_df)
             #  если в кэше данных нет - строим дф заново 
@@ -331,7 +335,10 @@ class CachingReportBuilder(ReportBuilder):
 
         #  кэшируем дф для возможного последующего использования его данных другими
         #  экземплярами CachingReportBuilder
-        self.cache_df(dataframe_id, df)
+        try:
+            self.cache_df(dataframe_id, df)
+        except:
+            pass
 
         return df
 
@@ -342,13 +349,20 @@ class CachingReportBuilder(ReportBuilder):
             data = self._results[query_id]
         else:
             #  если их там нет - пробуем получить из кэша
-            data = self.get_cached_query_result(query_id)
+            try:
+                data = self.get_cached_query_result(query_id)
+            except:
+                data = None
         #  если в кэше нет результата - выполняем запрос заново
         if data is None:
             data = super().get_data(query_id)
 
         #  кэшируем для возможного послед. использования
-        self.cache_query_result(query_id, data)
+        try:
+            self.cache_query_result(query_id, data)
+        except:
+            pass
+        
         return data
 
     def _connect(self):
@@ -359,6 +373,7 @@ class CachingReportBuilder(ReportBuilder):
             host=self._redis_host, 
             port=self._redis_port, 
             db=self._redis_db,
+            socket_timeout=3,
         )
 
     def _set(self, key, value, value_type='dataframe', ex=None):

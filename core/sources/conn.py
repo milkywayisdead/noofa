@@ -332,6 +332,7 @@ class RedisSource(DataSource):
             db=self._db,
             username=self._username,
             password=self._password,
+            socket_timeout=3,
         )
         return conn
 
