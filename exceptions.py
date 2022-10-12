@@ -7,4 +7,4 @@ from .core.func.errors import (
 )
 
 from .components.exceptions import SchemaComponentNotFound
-from .builder.exceptions import RecursiveDataframeBuildError
+from .builders.exceptions import RecursiveDataframeBuildError
