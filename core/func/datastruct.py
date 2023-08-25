@@ -25,9 +25,9 @@ class ToList(DatastructFunc):
     """
     Функция преобразования в список элементов.
     """
-    description = 'Функция создания списка элементов'
+    description = 'Функция преобразования в список элементов'
     args_description = [
-        MandatoryArg('Элемент', 2),
+        MandatoryArg('Элемент', 0, [pd.DataFrame, pd.Series]),
     ]
 
     @classmethod

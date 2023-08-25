@@ -9,7 +9,7 @@ _JOINS = {
 
 _FILTERS = {
     '==': query.EqFilter,
-    '<>': query.NeqFilter,
+    '!=': query.NeqFilter,
     '>': query.GtFilter,
     '>=': query.GeFilter,
     '<': query.LtFilter,
@@ -18,6 +18,7 @@ _FILTERS = {
     'startswith': query.StartsWithFilter,
     'endswith': query.EndsWithFilter,
     'in': query.InFilter,
+    'not in': query.NotInFilter,
 }
 
 
@@ -73,7 +74,7 @@ class Qbuilder:
     # В конструктов передаются:
     # словарь используемых в запросе таблиц вида {название таблицы: объект Table}
     # и запрос в виде словаря
-    def __init__(self, tables, query, param_placeholder='%s'):
+    def __init__(self, tables, query, param_placeholder='%s', mssql=False):
         self._source = None  # источник данных
         self._base = query['base']
         self._tables = tables  # словарь таблиц
@@ -83,6 +84,8 @@ class Qbuilder:
         self._values_list = query.get('values', [])  # список запрашиваемых полей
         self._limit = query.get('limit', None)  #  limit в запросе
         self._orderings = query.get('order_by', [])  # упорядочивание
+        self._is_mssql = mssql
+
         try:
             int(self._limit)
         except:
@@ -105,7 +108,7 @@ class Qbuilder:
             joins.append(J(l, r, (on_l, on_r)))
 
         return joins
-    
+
     def _parse_filters(self, f):
         """
         Построение объекта составного фильтра Q.
@@ -154,7 +157,7 @@ class Qbuilder:
     def parse_filters(self):
         """
         Построение фильтров.
-        Возвращается список составных фильтров Q. 
+        Возвращается список составных фильтров Q.
         """
         res = []
 
@@ -172,8 +175,10 @@ class Qbuilder:
         values, orderings = self._parse_values(), self._parse_orderings()
         q = self._base_table.select().join(*joins).where(*filters).values(*values)
         q = q.order_by(*orderings)
+
         if self._limit is not None:
-            q.limit(self._limit)
+            l = self._limit
+            q.limit(l) if not self._is_mssql else q.mssql_limit(l)
         return q
 
     def _parse_values(self):
@@ -182,12 +187,16 @@ class Qbuilder:
         for v in values_list:
             table = self._tables[v['table']]
             field_name = v['field']
+            try:
+                alias = v['alias']
+            except KeyError:
+                alias = None
             table.has_field(field_name)
             if table.enquote:
                 value = f'"{table._name}"."{field_name}"'
             else:
                 value = f'{table._name}.{field_name}'
-            result.append(value)
+            result.append((value, alias))
         return result
 
     def _parse_orderings(self):
@@ -208,7 +217,7 @@ class Qbuilder:
                 values.append(value)
             result.append((values, type_))
         return result
-            
+
 
 def collect_query_filters():
     return list(_FILTERS.keys())

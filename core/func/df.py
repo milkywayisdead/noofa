@@ -1,5 +1,11 @@
+from datetime import datetime, date, time
+
 from .base import DataframeFunc, MandatoryArg, NonMandatoryArg
+from ..sources.conn import DataQueryResult
 from ..dataframes import panda_builder
+
+
+_DF = panda_builder.pd.DataFrame
 
 
 class Join(DataframeFunc):
@@ -8,11 +14,11 @@ class Join(DataframeFunc):
     """
     description = 'Функция соединения датафреймов'
     args_description = [
-        MandatoryArg('Датафрейм1', 0),
-        MandatoryArg('Датафрейм2', 1),
-        MandatoryArg('Поле первого датафрейма', 2),
-        MandatoryArg('Поле второго датафрейма', 3),
-        MandatoryArg('Тип объединения', 4),
+        MandatoryArg('Датафрейм1', 0, [_DF]),
+        MandatoryArg('Датафрейм2', 1, [_DF]),
+        MandatoryArg('Поле первого датафрейма', 2, [str]),
+        MandatoryArg('Поле второго датафрейма', 3, [str]),
+        MandatoryArg('Тип объединения', 4, [str]),
     ]
 
     @classmethod
@@ -21,9 +27,9 @@ class Join(DataframeFunc):
 
     def _operation(self, *args):
         df1, df2 = args[0], args[1]
-        on = [args[2], args[3]]
+        lo, ro = args[2], args[3]
         join_type = args[4]
-        joined = panda_builder.join(df1, df2, on, join_type)
+        joined = panda_builder.join(df1, df2, [lo, ro], join_type)
         return joined
 
 
@@ -33,8 +39,8 @@ class Union(DataframeFunc):
     """
     description = 'Функция объединения датафреймов'
     args_description = [
-        MandatoryArg('Датафрейм1', 0),
-        MandatoryArg('Датафрейм2', 1),
+        MandatoryArg('Датафрейм1', 0, [_DF]),
+        MandatoryArg('Датафрейм2', 1, [_DF]),
     ]
 
     @classmethod
@@ -51,9 +57,9 @@ class Order(DataframeFunc):
     """
     description = 'Функция упорядочивания строк датафреймов'
     args_description = [
-        MandatoryArg('Датафрейм1', 0),
-        MandatoryArg('Поле', 1),
-        NonMandatoryArg('Направление', 2),
+        MandatoryArg('Датафрейм1', 0, [_DF]),
+        MandatoryArg('Поле', 1, [str]),
+        NonMandatoryArg('Направление', 2, [str]),
     ]
 
     @classmethod
@@ -64,6 +70,7 @@ class Order(DataframeFunc):
         asc = True
         try:
             asc = args[2]
+            asc = False if asc == 'desc' else True
         except IndexError:
             pass
         return panda_builder.order_by(args[0], args[1], asc=asc)
@@ -72,8 +79,8 @@ class Order(DataframeFunc):
 class DfFilterDict:
     """
     Обёртка для фильтров датафреймов в виде словарей.
-    Используется для простого формирования и сложения фильтров в 
-    строках выражений.  
+    Используется для простого формирования и сложения фильтров в
+    строках выражений.
     """
     def __init__(self, dff_dict):
         self._q = dff_dict
@@ -102,9 +109,9 @@ class DfFilter(DataframeFunc):
     """
     description = 'Функция создания фильтров для датафреймов'
     args_description = [
-        MandatoryArg('Название столбца', 1),
-        MandatoryArg('Тип фильтра', 2),
-        MandatoryArg('Значение', 3),
+        MandatoryArg('Название столбца', 1, [str]),
+        MandatoryArg('Тип фильтра', 2, [str]),
+        MandatoryArg('Значение', 3, [str, int, float, date, time, datetime, bool]),
     ]
 
     @classmethod
@@ -126,8 +133,8 @@ class Filter(DataframeFunc):
     """
     description = 'Функция применения фильтров датафреймов'
     args_description = [
-        MandatoryArg('Датафрейм1', 0),
-        MandatoryArg('Фильтр', 1),
+        MandatoryArg('Датафрейм1', 0, [_DF]),
+        MandatoryArg('Фильтр', 1, [DfFilterDict]),
     ]
 
     @classmethod
@@ -149,8 +156,8 @@ class DfQuery(DataframeFunc):
     """
     description = 'Функция выборки данных из датафрейма'
     args_description = [
-        MandatoryArg('Датафрейм', 0),
-        MandatoryArg('Строка запроса', 1),
+        MandatoryArg('Датафрейм', 0, [_DF]),
+        MandatoryArg('Строка запроса', 1, [str]),
     ]
 
     @classmethod
@@ -167,8 +174,8 @@ class AddColumn(DataframeFunc):
     """
     description = 'Функция добавления/изменения столбцов датафреймов'
     args_description = [
-        MandatoryArg('Датафрейм', 0),
-        MandatoryArg('Название столбца', 1),
+        MandatoryArg('Датафрейм', 0, [_DF]),
+        MandatoryArg('Название столбца', 1, [str]),
         MandatoryArg('Значения', 2),
     ]
 
@@ -187,8 +194,8 @@ class GetColumn(DataframeFunc):
     """
     description = 'Функция получения столбца датафрейма'
     args_description = [
-        MandatoryArg('Датафрейм', 0),
-        MandatoryArg('Название столбца', 1),
+        MandatoryArg('Датафрейм', 0, [_DF]),
+        MandatoryArg('Название столбца', 1, [str]),
     ]
 
     @classmethod
@@ -205,8 +212,8 @@ class Head(DataframeFunc):
     """
     description = 'Функция получения n первых строк датафрейма'
     args_description = [
-        MandatoryArg('Датафрейм', 0),
-        MandatoryArg('Количество строк', 1),
+        MandatoryArg('Датафрейм', 0, [_DF]),
+        MandatoryArg('Количество строк', 1, [int]),
     ]
 
     @classmethod
@@ -223,8 +230,8 @@ class Tail(DataframeFunc):
     """
     description = 'Функция получения n последних строк датафрейма'
     args_description = [
-        MandatoryArg('Датафрейм', 0),
-        MandatoryArg('Количество строк', 1),
+        MandatoryArg('Датафрейм', 0, [_DF]),
+        MandatoryArg('Количество строк', 1, [int]),
     ]
 
     @classmethod
@@ -234,6 +241,23 @@ class Tail(DataframeFunc):
     def _operation(self, *args):
         return args[0].tail(args[1])
 
+class DfCount(DataframeFunc):
+    """
+    Функция получения количества строк датафрейма.
+    """
+    description = 'Функция получения количества строк датафрейма'
+    args_description = [
+        MandatoryArg('Датафрейм', 0, [_DF]),
+    ]
+
+    @classmethod
+    def get_name(self):
+        return 'df_count'
+
+    def _operation(self, *args):
+        df = args[0]
+        return df.shape[0]
+
 
 class CreateDataframe(DataframeFunc):
     """
@@ -241,7 +265,7 @@ class CreateDataframe(DataframeFunc):
     """
     description = 'Функция создания датафреймов'
     args_description = [
-        NonMandatoryArg('Данные', 0),
+        NonMandatoryArg('Данные', 0, [_DF, list, DataQueryResult]),
     ]
 
     @classmethod
@@ -251,4 +275,10 @@ class CreateDataframe(DataframeFunc):
     def _operation(self, *args):
         if not args:
             return panda_builder.new()
-        return panda_builder.new(args[0])
+        data = args[0]
+        if isinstance(data, DataQueryResult):
+            return panda_builder.new(data.data, data.columns)
+        if data:
+            columns = data.pop(0)
+            return panda_builder.new(data, columns)
+        return panda_builder.new(data)

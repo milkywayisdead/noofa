@@ -14,7 +14,7 @@ _OPERATORS = _OPERATORS_PRIORITY.keys()
 
 class Interpreter:
     """
-    Интерпретатор для выполнения функций и вычислений. 
+    Интерпретатор для выполнения функций и вычислений.
     """
     def __init__(self, **context):
         self._functions_dict = {**_functions_dict}
@@ -22,6 +22,15 @@ class Interpreter:
         self._operators_dict = _operators_dict
         self._context = Context(**context)
         self._connections = {}
+
+    def add_values(self, values_list, evaluator):
+        self._context.add_values(values_list, evaluator)
+
+    def get_value(self, name):
+        return self._context.get_value(name)
+
+    def update_value(self, name, value):
+        self._context.update_value(name, value)
 
     def evaluate(self, expression):
         """
@@ -53,8 +62,9 @@ class Interpreter:
             self.add_to_local(key, row)
             self.add_to_local('idx', idx)
             result.append(self.evaluate(expr))
-        self._context.remove(key)
-        self._context.remove('idx')
+        if result:
+            self._context.remove(key)
+            self._context.remove('idx')
         self._context.switch_to_global()
         return result
 
@@ -160,9 +170,12 @@ class Interpreter:
             if _func is None:
                 return args[0]
             else:
-                func = self._get_function(_func['value'])
-                if _func['value'] == 'connection':
-                    return func(self._connections, *args)              
+                fname = _func['value']
+                func = self._get_function(fname)
+                if func.group == 'context':
+                    args.insert(0, self._context)
+                #if _func['value'] == 'connection':
+                #    return func(self._connections, *args)
             return func(*args)
 
     def _get_function(self, name):
@@ -170,13 +183,13 @@ class Interpreter:
 
     def _get_operator(self, sign):
         return self._operators_dict.get(sign, None)
-        
+
     def _normalize_operators(self, expr):
         """
         Упорядочивание операторов в выражении по приоритету операций.
         """
         type_ = expr['type']
-        if type_ == 'operator': 
+        if type_ == 'operator':
             _unpacked = self._unpack_operator(expr)
             expr = self._sort_operators(_unpacked)
         elif type_ == 'call':
@@ -241,7 +254,7 @@ class Interpreter:
                 if i == 'left':
                     res.insert(0, o)
                 else:
-                    res.append(o)                
+                    res.append(o)
                 continue
             if o['type'] == 'operator':
                 unp = self._unpack_operator(o)

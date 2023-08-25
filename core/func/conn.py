@@ -2,7 +2,6 @@
 Функции подключения к источникам.
 """
 
-from webbrowser import get
 from ..sources.conn import get_source_class
 from .base import ConnectionFunc, MandatoryArg
 
@@ -13,8 +12,8 @@ class NewConnection(ConnectionFunc):
     """
     description = 'Функция создания подключения к источнику'
     args_description = [
-        MandatoryArg('Тип источника', 0),
-        MandatoryArg('Строка подключения', 1),
+        MandatoryArg('Тип источника', 0, [str]),
+        MandatoryArg('Строка подключения', 1, [str]),
     ]
 
     @classmethod

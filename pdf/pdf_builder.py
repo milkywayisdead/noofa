@@ -20,7 +20,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.units import inch
 
 
-#  фикс для корректного отображения криллицы
+#  фикс для корректного отображения кириллицы
 pdfmetrics.registerFont(TTFont('DejaVuSerif','DejaVuSerif.ttf', 'UTF-8'))
 
 
@@ -98,7 +98,7 @@ class PdfReport:
         self._story.append(image)
         self.add_pagebreak()
         return self
-    
+
     def save(self):
         """
         Сохранение pdf-документа.

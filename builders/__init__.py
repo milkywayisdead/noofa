@@ -1,1 +1,2 @@
-from .builders import ReportBuilder, CachingReportBuilder
+from .builders import ReportBuilder
+from .caching import CachingReportBuilder

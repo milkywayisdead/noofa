@@ -10,7 +10,7 @@ class To_Str(TypeconvFunc):
     """
     description = 'Преобразование в строку'
     args_description = [
-        MandatoryArg('Значение', 0),
+        MandatoryArg('Значение', 0, [int, float, str]),
     ]
 
     def _operation(self, *args):
@@ -27,7 +27,7 @@ class To_Float(TypeconvFunc):
     """
     description = 'Преобразование в тип float'
     args_description = [
-        MandatoryArg('Значение', 0),
+        MandatoryArg('Значение', 0, [str, int, float]),
     ]
 
     def _operation(self, *args):
@@ -44,7 +44,7 @@ class To_Int(TypeconvFunc):
     """
     description = 'Преобразование в тип int'
     args_description = [
-        MandatoryArg('Значение', 0),
+        MandatoryArg('Значение', 0, [str, int, float]),
     ]
 
     def _operation(self, *args):

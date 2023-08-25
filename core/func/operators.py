@@ -1,6 +1,8 @@
 """
 Операторы.
 """
+from datetime import datetime
+
 from .base import Operator, MandatoryArg
 from ..dataframes import panda_builder
 
@@ -21,15 +23,18 @@ _OPERATORS_PRIORITY = {
 }
 
 
+_NONE_TYPE = type(None)
+
+
 class Add(Operator):
     """
     Сумма двух чисел.
     """
     sign = '+'
-    description = 'Сумма двух чисел'
+    description = 'Сумма двух чисел или конкатенация строк'
     args_description = [
-        MandatoryArg('Число1', 0),
-        MandatoryArg('Число2', 1),
+        MandatoryArg('Число1', 0, [int, float, str, _NONE_TYPE, panda_builder.pd.DataFrame]),
+        MandatoryArg('Число2', 1, [int, float, str, panda_builder.pd.DataFrame]),
     ]
 
     def _operation(self, *args):
@@ -48,8 +53,8 @@ class Subtract(Operator):
     sign = '-'
     description = 'Вычитание'
     args_description = [
-        MandatoryArg('Число1', 0),
-        MandatoryArg('Число2', 1),
+        MandatoryArg('Число1', 0, [int, float, str, _NONE_TYPE]),
+        MandatoryArg('Число2', 1, [int, float, str]),
     ]
 
     def _operation(self, *args):
@@ -66,8 +71,8 @@ class Divide(Operator):
     sign = '/'
     description = 'Деление'
     args_description = [
-        MandatoryArg('Число1', 0),
-        MandatoryArg('Число2', 1),
+        MandatoryArg('Число1', 0, [int, float]),
+        MandatoryArg('Число2', 1, [int, float]),
     ]
 
     def _operation(self, *args):
@@ -81,8 +86,8 @@ class Multiply(Operator):
     sign = '*'
     description = 'Умножение'
     args_description = [
-        MandatoryArg('Число1', 0),
-        MandatoryArg('Число2', 1),
+        MandatoryArg('Число1', 0, [int, float]),
+        MandatoryArg('Число2', 1, [int, float]),
     ]
 
     def _operation(self, *args):
@@ -111,8 +116,8 @@ class IsGt(Operator):
     sign = '>'
     description = 'Сравнение > двух значений'
     args_description = [
-        MandatoryArg('Значение1', 0),
-        MandatoryArg('Значение2', 1),
+        MandatoryArg('Значение1', 0, [int, float, bool, datetime]),
+        MandatoryArg('Значение2', 1, [int, float, bool, datetime]),
     ]
 
     def _operation(self, *args):
@@ -126,8 +131,8 @@ class IsGte(Operator):
     sign = '>='
     description = 'Сравнение >= двух значений'
     args_description = [
-        MandatoryArg('Значение1', 0),
-        MandatoryArg('Значение2', 1),
+        MandatoryArg('Значение1', 0, [int, float, bool, datetime]),
+        MandatoryArg('Значение2', 1, [int, float, bool, datetime]),
     ]
 
     def _operation(self, *args):
@@ -141,8 +146,8 @@ class IsLt(Operator):
     sign = '<'
     description = 'Сравнение < двух значений'
     args_description = [
-        MandatoryArg('Значение1', 0),
-        MandatoryArg('Значение2', 1),
+        MandatoryArg('Значение1', 0, [int, float]),
+        MandatoryArg('Значение2', 1, [int, float]),
     ]
 
     def _operation(self, *args):
@@ -156,8 +161,8 @@ class IsLte(Operator):
     sign = '<='
     description = 'Сравнение <= двух значений'
     args_description = [
-        MandatoryArg('Значение1', 0),
-        MandatoryArg('Значение2', 1),
+        MandatoryArg('Значение1', 0, [int, float]),
+        MandatoryArg('Значение2', 1, [int, float]),
     ]
 
     def _operation(self, *args):
@@ -171,8 +176,8 @@ class IsEq(Operator):
     sign = '=='
     description = 'Сравнение == двух значений'
     args_description = [
-        MandatoryArg('Значение1', 0),
-        MandatoryArg('Значение2', 1),
+        MandatoryArg('Значение1', 0, [str, int, float, bool, datetime, list]),
+        MandatoryArg('Значение2', 1, [str, int, float, bool, datetime, list]),
     ]
 
     def _operation(self, *args):
@@ -186,8 +191,8 @@ class IsNeq(Operator):
     sign = '!='
     description = 'Сравнение != двух значений'
     args_description = [
-        MandatoryArg('Значение1', 0),
-        MandatoryArg('Значение2', 1),
+        MandatoryArg('Значение1', 0, [str, int, float, bool, datetime, list]),
+        MandatoryArg('Значение2', 1, [str, int, float, bool, datetime, list]),
     ]
 
     def _operation(self, *args):

@@ -33,8 +33,8 @@ class Contains(StrFunc):
     """
     description = 'Проверка, содержит ли строка другую строку'
     args_description = [
-        MandatoryArg('Строка1', 0),
-        MandatoryArg('Строка2', 1),
+        MandatoryArg('Строка1', 0, [str,]),
+        MandatoryArg('Строка2', 1, [str,]),
     ]
 
     def _operation(self, *args):
@@ -47,8 +47,8 @@ class Endswith(StrFunc):
     """
     description = 'Проверка, заканчивается ли строка другой строкой'
     args_description = [
-        MandatoryArg('Строка1', 0),
-        MandatoryArg('Строка2', 1),
+        MandatoryArg('Строка1', 0, [str,]),
+        MandatoryArg('Строка2', 1, [str,]),
     ]
 
     def _operation(self, *args):
@@ -72,7 +72,7 @@ class Lower(StrFunc):
     """
     description = 'Перевод строки в нижний регистр'
     args_description = [
-        MandatoryArg('Строка', 0),
+        MandatoryArg('Строка', 0, [str]),
     ]
 
     def _operation(self, *args):
@@ -85,7 +85,7 @@ class Upper(StrFunc):
     """
     description = 'Перевод строки в верхний регистр'
     args_description = [
-        MandatoryArg('Строка', 0),
+        MandatoryArg('Строка', 0, [str]),
     ]
 
     def _operation(self, *args):
@@ -98,8 +98,8 @@ class Concat(StrFunc):
     """
     description = 'Сложение строк'
     args_description = [
-        MandatoryArg('Строка1', 0),
-        MandatoryArg('Строка2', 1),
+        MandatoryArg('Строка1', 0, [str]),
+        MandatoryArg('Строка2', 1, [str]),
     ]
 
     def _operation(self, *args):
@@ -115,9 +115,9 @@ class Join(StrFunc):
     """
     description = 'Объединение строк через разделитель'
     args_description = [
-        MandatoryArg('Разделитель', 0),
-        MandatoryArg('Строка1', 1),
-        MandatoryArg('Строка2', 2),
+        MandatoryArg('Разделитель', 0, [str]),
+        MandatoryArg('Строка1', 1, [str]),
+        MandatoryArg('Строка2', 2, [str]),
     ]
 
     def _operation(self, *args):
@@ -132,8 +132,8 @@ class Startswith(StrFunc):
     """
     description = 'Проверка, начинается ли строка другой строкой'
     args_description = [
-        MandatoryArg('Строка1', 0),
-        MandatoryArg('Строка2', 1),
+        MandatoryArg('Строка1', 0, [str]),
+        MandatoryArg('Строка2', 1, [str]),
     ]
 
     def _operation(self, *args):

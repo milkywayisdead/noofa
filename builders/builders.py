@@ -2,7 +2,12 @@
 Инструменты построения отчётов.
 """
 import json
-import redis
+from io import BytesIO
+from datetime import (
+    date as dt_date,
+    time as dt_time,
+    datetime
+)
 
 from ..core.func.errors import InterpreterContextError
 from ..core.func import Interpreter
@@ -16,7 +21,11 @@ class ReportBuilder:
     """
     Формирователь отчётов.
     """
-    def __init__(self, data_config={}, components_config={}, set_evaluator=True, *args, **kwargs):
+    def __init__(self, data_config=None, components_config=None, values=None, set_evaluator=True, *args, **kwargs):
+        data_config = data_config or {}
+        components_config = components_config or {}
+        values = values or {}
+
         self._dataschema = DataSchema()  # схема данных
         self._components_schema = ComponentsSchema()  # схема компонентов
         self.interpreter = Interpreter()  # интерпретатор для вычисления формул
@@ -29,6 +38,10 @@ class ReportBuilder:
         sources_conf = data_config.get('sources', {})
         queries_config = data_config.get('queries', {})
         dataframes_config = data_config.get('dataframes', {})
+
+        # добавление значений
+        self.interpreter.add_values(values.values(), self)
+
         """
         добавление источников в схему:
         источники добавляются из словаря (json) либо из строки подключения (conn_str)
@@ -38,7 +51,7 @@ class ReportBuilder:
         """
         for s in sources_conf.values():
             build_from, value = s['from'], s['value']
-            opts = {'id': s['id'], 'type': s['type']}
+            opts = {'id': s['id'], 'name': s['name'], 'type': s['type']}
             if build_from == 'json':
                 opts.update(value)
             elif build_from == 'conn_str':
@@ -55,12 +68,10 @@ class ReportBuilder:
         'sql_select("table1", sql_join("table2", "table1", "field1", "field2"))'.
         """
         for q in queries_config.values():
-            opts = {'id': q['id'], 'source': q['source']}
-            build_from, value = q['from'], q['value']
-            if build_from == 'json':
-                opts['query'] = value
-            elif build_from == 'expression':
-                opts['query'] = self.evaluate(value).q_part
+            opts = {
+                'id': q['id'], 'name': q['name'], 'source': q['source'],
+                'build_from': q['from'], 'query_src': q['value']
+            }
             self._dataschema.add_query(**opts)
 
         # добавление датафреймов в схему
@@ -81,14 +92,20 @@ class ReportBuilder:
                 method = self._components_schema.add_table
             elif type_ == 'figure':
                 method = self._components_schema.add_figure
-            lo = c.pop('layout')
+            elif type_ == 'pivot_table':
+                method = self._components_schema.add_pivot_table
+            lo = c.get('layout', {})
             method(using_evaluator=evaluator, **c, **lo)
+
+    def get_value(self, name):
+        value = self.interpreter.get_value(name)
+        return SingleValue(name, value)
 
     def evaluate(self, expr):
         """
         Вычисление значения по строке выражения.
         """
-        try: 
+        try:
             return self.interpreter.evaluate(expr)
         except InterpreterContextError as e:
             df = self.get_or_build_dataframe(e.key)
@@ -101,6 +118,14 @@ class ReportBuilder:
         """
         df = self.get_or_build_dataframe(df_id)
         return self.interpreter.apply(df, expr)
+
+    def apply_filters(self, filters):
+        """
+        Применить фильтры - т.е. задать для вычисляемых значений
+        конфиги определённые значения.
+        """
+        for filter_key, filter_value in filters.items():
+            self.interpreter.update_value(filter_key, filter_value)
 
     @property
     def dataframes(self):
@@ -128,6 +153,11 @@ class ReportBuilder:
         if query_id in self._results:
             return self._results[query_id]
         query = self.get_query(query_id)
+        qf = query.build_from
+        if qf == 'json':
+            query.query = query.query_src
+        elif qf == 'expression':
+            query.query = self.evaluate(query.query_src).q_part
         data = query.execute()
         self._compiled_queries[query.id] = query._compiled
         self._results[query.id] = data
@@ -157,7 +187,7 @@ class ReportBuilder:
 
         # удаляем id дф из стэка
         self._df_stack.pop()
-        
+
         return df
 
     def build_base(self, dataframe_id):
@@ -169,9 +199,12 @@ class ReportBuilder:
         df = self.get_dataframe(dataframe_id)
         build_type = df.build_type
         if build_type == 'query':
-            dataframe = panda_builder.new(df.get_data())
+            res = self.get_data(df._query.id)
+            dataframe = panda_builder.new(res.data, res.columns)
         elif build_type == 'expression':
             dataframe = self.evaluate(df.build_from)
+        elif build_type == 'source':
+            dataframe = df.get_data()
         return dataframe
 
     def build_dataframe(self, dataframe_id):
@@ -183,6 +216,14 @@ class ReportBuilder:
         df = self.get_dataframe(dataframe_id)
         #  создание базового датафрейма - либо из запроса, либо из выражения
         dataframe = self.build_base(dataframe_id)
+
+        # преобразование типов
+        for dt in df.dtypes:
+            try:
+                col, dtype = dt['col'], dt['dtype']
+                dataframe = panda_builder.astype(dataframe, col, dtype)
+            except:
+                pass
 
         #  приклеивание других датафреймов
         for u in df.unions:
@@ -204,13 +245,19 @@ class ReportBuilder:
             dataframe = panda_builder.join(dataframe, df2, on, join_type)
 
         #  добавление новых столбцов либо изменение существующих
+        extra_cols_n, extra_cols = len(df.cols), {}
         for col in df.cols:
             from_, col_name, expr = col['from'], col['name'], col['value']
             if from_ == 'expression':
                 value = self.evaluate(expr)
             elif from_ == 'apply':
                 value = self.interpreter.apply(dataframe, expr)
-            dataframe = panda_builder.add_column(dataframe, col_name, value)
+            if extra_cols_n == 1:
+                dataframe = panda_builder.add_column(dataframe, col_name, value)
+            else:
+                extra_cols[col_name] = value
+        if extra_cols:
+            dataframe = panda_builder.add_columns(dataframe, extra_cols)
 
         #  применение фильтров
         filters = []
@@ -223,13 +270,27 @@ class ReportBuilder:
             dataframe = panda_builder.filter(dataframe, filters)
 
         #  упорядочивание
-        if df.ordering:
-            ordering = df.ordering
+        orderings = {'cols': [], 'asc': []}
+        for ordering in df.ordering:
             cols, asc = ordering['cols'], ordering['asc']
+            orderings['cols'].append(cols)
+            orderings['asc'].append(asc)
+        if orderings['cols']:
+            cols, asc = orderings['cols'], orderings['asc']
             dataframe = panda_builder.order_by(dataframe, cols, asc=asc)
+
+        # обработка пустых значений
+        for fn in df.fillna:
+            col, action, value = fn['col'], fn['action'], fn['value']
+            if action == 'drop':
+                dataframe = panda_builder.drop_na(dataframe, col)
+            elif action == 'fill':
+                fill_value = self.evaluate(value)
+                dataframe = panda_builder.fill_na(dataframe, col, fill_value)
+
         return dataframe
 
-    def build_table(self, table):
+    def build_table(self, table, **kwargs):
         """
         Формирование компонента-таблицы.
         table - id компонента в наборе таблиц схемы компонентов
@@ -238,10 +299,10 @@ class ReportBuilder:
         if isinstance(table, str):
             table = self._components_schema.get_table(table)
         #  если у компонента нет "объекта-вычислителя",
-        #  то им становится сам ReportBuilder    
+        #  то им становится сам ReportBuilder
         if table.evaluator is None:
             table.evaluator = self
-        table.build()
+        table.build(**kwargs)
         return table
 
     def build_figure(self, figure):
@@ -263,6 +324,25 @@ class ReportBuilder:
         method = getattr(self, f'build_{component.type}')
         return method(component)
 
+    def bufferize_xlsx(self, cmp_type, cmp_id, **kwargs):
+        """
+        Получение содержимого результата запроса, датафрейма либо таблицы
+        в виде буфера байт.
+        """
+        buffer = BytesIO()
+        is_pt = False
+        if cmp_type == 'dataframe':
+            df = self.get_or_build_dataframe(cmp_id)
+        elif cmp_type == 'query':
+            data = self.get_data(cmp_id)
+            df = panda_builder.new(data.data, data.columns)
+        elif cmp_type == 'table':
+            table = self.build_table(cmp_id, **kwargs)
+            is_pt = hasattr(table, 'is_pivot_table')
+            df = table.pivot_df if is_pt else table.df
+        df.to_excel(buffer, index=is_pt)
+        return buffer
+
     def df_to_dict(self, dataframe_id):
         """
         Датафрейм -> словарь.
@@ -283,157 +363,15 @@ class ReportBuilder:
         return self._components_schema.get_component(component_id)
 
 
-class CachingReportBuilder(ReportBuilder):
-    """
-    Формирователь отчётов с функционалом кэширования в redis.
-    Это дочерний класс от ReportBuilder с измененными методами get_or_build_dataframe и
-    get_data и несколькими дополнительными методами, связанными с кэшированием.
-    При создании датафрейма кэшируется его содержимое в виде словаря. При построении
-    датафрейма сначала делается попытка получить кэшированное содержимое для датафрейма,
-    в случае отсутствия такового - выполняется построение с нуля.
-    В конструктор, помимо параметров подключения, можно передавать аргумент prefix вида 'profileN', 
-    где N - id профиля отчёта.
-    """
-    def __init__(self, *args, **kwargs):
-        defaults = {
-            'redis_host': 'localhost',
-            'redis_port': 6379,
-            'redis_db': 0,
-            'ex': 300,
-            'prefix': 'profile0',
-        }
-        for kw in defaults.keys():
-            if kw in kwargs:
-                defaults[kw] = kwargs.pop(kw)
+class SingleValue:
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
 
-        super().__init__(*args, **kwargs)
-        self._redis_host = defaults['redis_host']
-        self._redis_port = defaults['redis_port']
-        self._redis_db = defaults['redis_db']
-        self._prefix = defaults['prefix']
-        self._ex = defaults['ex']  # время жизни кэшированных записей в секундах
-        self._conn = None
-
-    def get_or_build_dataframe(self, dataframe_id):
-        #  сначала пробуем получить уже готовый дф
-        df = self._built_dataframes.get(dataframe_id, None)
-        #  если его нет, то пробуем построить его по данным из кэша
-        if df is None:
-            try:
-                cached_df = self.get_cached_df(dataframe_id)
-            except:
-                cached_df = None
-            if cached_df:
-                df = panda_builder.new(cached_df)
-            #  если в кэше данных нет - строим дф заново 
-            else:
-                df = self.build_dataframe(dataframe_id)
-
-        #  добавляем в словарь готовых дф для возможного последующего использования,
-        #  чтобы не обращаться дополнительно к кэшу
-        self._built_dataframes[dataframe_id] = df
-
-        #  кэшируем дф для возможного последующего использования его данных другими
-        #  экземплярами CachingReportBuilder
-        try:
-            self.cache_df(dataframe_id, df)
-        except:
-            pass
-
-        return df
-
-    def get_data(self, query_id):
-        #  сначала проверяем наличие рез. запроса в сохраненных результатах -
-        #  в self._results
-        if query_id in self._results:
-            data = self._results[query_id]
-        else:
-            #  если их там нет - пробуем получить из кэша
-            try:
-                data = self.get_cached_query_result(query_id)
-            except:
-                data = None
-        #  если в кэше нет результата - выполняем запрос заново
-        if data is None:
-            data = super().get_data(query_id)
-
-        #  кэшируем для возможного послед. использования
-        try:
-            self.cache_query_result(query_id, data)
-        except:
-            pass
-        
-        return data
-
-    def _connect(self):
-        """
-        Создание соединения с redis.
-        """
-        self._conn = redis.Redis(
-            host=self._redis_host, 
-            port=self._redis_port, 
-            db=self._redis_db,
-            socket_timeout=3,
-        )
-
-    def _set(self, key, value, value_type='dataframe', ex=None):
-        """
-        Установка значения в кэш.
-        """
-        if self._conn is None:
-            self._connect()
-        _key = f'{self._prefix}:{value_type}:{key}'
-        if ex is None:
-            ex = self._ex
-        self._conn.set(_key, value, ex=ex)
-
-    def _get(self, key, value_type='dataframe'):
-        """
-        Получение значения из кэша.
-        """
-        if self._conn is None:
-            self._connect()
-        return self._conn.get(f'{self._prefix}:{value_type}:{key}')
-
-    def cache_df(self, dataframe_id, df, ex=None):
-        """
-        Кэшировать датафрейм.
-        dataframe_id - id датафрейма,
-        df - экз. pandas.DataFrame либо словарь,
-        ex - время хранения в кэше в секундах.
-        """
-        if isinstance(df, panda_builder.pd.DataFrame):
-            df = df.to_dict(orient='records')
-        df = json.dumps(df)
-        self._set(dataframe_id, df, value_type='dataframe', ex=ex)
-
-    def get_cached_df(self, dataframe_id):
-        """
-        Получение кэшированных данных датафрейма.
-        dataframe_id - id датафрейма.
-        """
-        cached_df = self._get(dataframe_id, value_type='dataframe')
-        if cached_df:
-            cached_df = json.loads(cached_df)
-            return cached_df
-
-    def cache_query_result(self, query_id, query_result, ex=None):
-        """
-        Кэшировать результат запроса.
-        query_id - id запроса,
-        query_result - результат запроса в виде списка словарей,
-        ex - время хранения в кэше в секундах.
-        """
-        if isinstance(query_result, list):
-            query_result = json.dumps(query_result)
-        self._set(query_id, query_result, value_type='query', ex=ex)
-
-    def get_cached_query_result(self, query_id):
-        """
-        Получение кэшированных результатов запроса.
-        query_id - id запроса.
-        """
-        cached_qr = self._get(query_id, value_type='query')
-        if cached_qr:
-            cached_qr = json.loads(cached_qr)
-            return cached_qr
+    @property
+    def is_simple(self):
+        stypes = [
+            str, int, float, bool, list,
+            datetime, dt_date, dt_time,
+        ]
+        return type(self.value) in stypes

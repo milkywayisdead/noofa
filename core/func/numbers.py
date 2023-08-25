@@ -13,7 +13,7 @@ class Abs(MathFunc):
     description = 'Получение модуля числа'
     operation = abs
     args_description = [
-        MandatoryArg('Число', 0),
+        MandatoryArg('Число', 0, [int, float]),
     ]
 
 
@@ -24,7 +24,7 @@ class Acos(MathFunc):
     description = 'Получение арккосинуса числа'
     operation = math.acos
     args_description = [
-        MandatoryArg('Число', 0),
+        MandatoryArg('Число', 0, [int, float]),
     ]
 
 
@@ -35,7 +35,7 @@ class Asin(MathFunc):
     description = 'Получение арксинуса числа'
     operation = math.asin
     args_description = [
-        MandatoryArg('Число', 0),
+        MandatoryArg('Число', 0, [int, float]),
     ]
 
 
@@ -46,7 +46,7 @@ class Atan(MathFunc):
     description = 'Получение арктангенса числа'
     operation = math.atan
     args_description = [
-        MandatoryArg('Число', 0),
+        MandatoryArg('Число', 0, [int, float]),
     ]
 
 
@@ -70,7 +70,7 @@ class Ceil(MathFunc):
     description = 'Округление числа в большую сторону'
     operation = math.ceil
     args_description = [
-        MandatoryArg('Число', 0),
+        MandatoryArg('Число', 0, [int, float]),
     ]
 
 
@@ -81,7 +81,7 @@ class Cos(MathFunc):
     description = 'Получение косинуса угла. Значение угла - в радианах'
     operation = math.cos
     args_description = [
-        MandatoryArg('Угол(рад)', 0),
+        MandatoryArg('Угол(рад)', 0, [int, float]),
     ]
 
 
@@ -91,14 +91,14 @@ class Cot(MathFunc):
     """
     description = 'Получение котангенса угла. Значение угла - в радианах'
     args_description = [
-        MandatoryArg('Угол(рад)', 0),
+        MandatoryArg('Угол(рад)', 0, [int, float]),
     ]
 
     def _operation(self, *args):
         try:
             return 1/math.tan(args[0])
         except ZeroDivisionError:
-            return math.inf        
+            return math.inf
 
 
 class Degrees(MathFunc):
@@ -108,7 +108,7 @@ class Degrees(MathFunc):
     description = 'Перевод радиан в градусы'
     operation = math.degrees
     args_description = [
-        MandatoryArg('Радианы', 0),
+        MandatoryArg('Радианы', 0, [int, float]),
     ]
 
 
@@ -118,8 +118,8 @@ class Div(MathFunc):
     """
     description = 'Деление двух чисел x/y с остатком'
     args_description = [
-        MandatoryArg('x', 0),
-        MandatoryArg('y', 1),
+        MandatoryArg('x', 0, [int, float]),
+        MandatoryArg('y', 1, [int, float]),
     ]
 
     def _operation(self, *args):
@@ -135,8 +135,8 @@ class Idiv(MathFunc):
     """
     description = 'Целочисленное деление двух чисел x/y'
     args_description = [
-        MandatoryArg('x', 0),
-        MandatoryArg('y', 1),
+        MandatoryArg('x', 0, [int, float]),
+        MandatoryArg('y', 1, [int, float]),
     ]
 
     def _operation(self, *args):
@@ -153,7 +153,7 @@ class Exp(MathFunc):
     description = 'Вычисление экспоненты'
     operation = math.exp
     args_description = [
-        MandatoryArg('Степень', 0),
+        MandatoryArg('Степень', 0, [int, float]),
     ]
 
 
@@ -165,7 +165,7 @@ class Floor(MathFunc):
     description = 'Округление числа в меньшую сторону'
     operation = math.floor
     args_description = [
-        MandatoryArg('Число', 0),
+        MandatoryArg('Число', 0, [int, float]),
     ]
 
 
@@ -175,7 +175,7 @@ class Ln(MathFunc):
     """
     description = 'Натуральный логарифм числа'
     args_description = [
-        MandatoryArg('Число', 0),
+        MandatoryArg('Число', 0, [int, float]),
     ]
 
     def _operation(self, *args):
@@ -189,8 +189,8 @@ class Log(MathFunc):
     description = 'Вычисление логарифма числа по основанию'
     operation = math.log
     args_description = [
-        MandatoryArg('Число', 0),
-        MandatoryArg('Основание', 1),
+        MandatoryArg('Число', 0, [int, float]),
+        MandatoryArg('Основание', 1, [int, float]),
     ]
 
     def _operation(self, *args):
@@ -204,8 +204,8 @@ class Pow(MathFunc):
     description = 'Возведение x в степень y'
     operation = pow
     args_description = [
-        MandatoryArg('x', 0),
-        MandatoryArg('y', 0),
+        MandatoryArg('x', 0, [int, float]),
+        MandatoryArg('y', 0, [int, float]),
     ]
 
 
@@ -216,7 +216,7 @@ class Radians(MathFunc):
     description = 'Перевод градусов в радианы'
     operation = math.radians
     args_description = [
-        MandatoryArg('Градусы', 0),
+        MandatoryArg('Градусы', 0, [int, float]),
     ]
 
 
@@ -227,8 +227,8 @@ class Round(MathFunc):
     description = 'Округление числа до определённого количества n знаков после запятой'
     operation = round
     args_description = [
-        MandatoryArg('Число', 0),
-        NonMandatoryArg('n', 1),
+        MandatoryArg('Число', 0, [int, float]),
+        NonMandatoryArg('n', 1, [int, float]),
     ]
 
 
@@ -239,7 +239,7 @@ class Sin(MathFunc):
     description = 'Получение синуса угла. Значение угла - в радианах'
     operation = math.sin
     args_description = [
-        MandatoryArg('Угол(рад)', 0),
+        MandatoryArg('Угол(рад)', 0, [int, float]),
     ]
 
 
@@ -250,7 +250,7 @@ class Sqrt(MathFunc):
     description = 'Извлечение квадратного корня числа'
     operation = math.sqrt
     args_description = [
-        MandatoryArg('Число', 0),
+        MandatoryArg('Число', 0, [int, float]),
     ]
 
 
@@ -258,11 +258,19 @@ class Sum(MathFunc):
     description = 'Сумма нескольких чисел'
     args_description = [
         MandatoryArg('Слагаемое1', 0),
-        MandatoryArg('Слашаемое2', 1),
+        NonMandatoryArg('Слагаемое2', 1),
     ]
 
     def _operation(self, *args):
         result = 0
+        arg = args[0]
+        if isinstance(arg, list):
+            return sum(arg)
+        else:
+            try:
+                return float(arg.sum()[0])
+            except AttributeError:
+                pass
         for arg in args:
             result += arg
         return result
@@ -275,5 +283,5 @@ class Tan(MathFunc):
     description = 'Получение тангенса угла. Значение угла - в радианах'
     operation = math.tan
     args_description = [
-        MandatoryArg('Угол(рад)', 0),
+        MandatoryArg('Угол(рад)', 0, [int, float]),
     ]

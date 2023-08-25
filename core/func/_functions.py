@@ -12,9 +12,9 @@ def _collect_functions():
     """
     from .base import Func
     from . import (
-        numbers, 
-        strings, 
-        date, 
+        numbers,
+        strings,
+        date,
         logic,
         datastruct,
         typeconv,
@@ -23,11 +23,11 @@ def _collect_functions():
         sql,
         conn,
     )
-    
+
     fmodules = (
-        numbers, 
-        strings, 
-        date, 
+        numbers,
+        strings,
+        date,
         logic,
         datastruct,
         typeconv,
@@ -75,7 +75,8 @@ def collect_func_info():
         fgroup = f.get_group()
         if not fgroup in res:
             res[fgroup] = {}
-        res[fgroup][fname] = f.get_description()
+        #res[fgroup][fname] = f.get_description()
+        res[fgroup][fname] = f.get_func_info()
     return res
 
 

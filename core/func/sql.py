@@ -1,13 +1,57 @@
+from datetime import datetime
+
 from ..sources.utils import Qbuilder, collect_tables
 from .base import SqlFunc, MandatoryArg, NonMandatoryArg
+
+
+class SqlDict:
+    """
+    Обертка для select-запросов и их частей в виде словарей.
+    Используется для упрощенного сложения запросов и фильтров
+    в виде словарей.
+    """
+    def __init__(self, dict_):
+        self._q = dict_
+
+    @property
+    def q_part(self):
+        return self._q
+
+    def keys(self):
+        return self._q.keys()
+
+    def values(self):
+        return self._q.values()
+
+    def __getitem__(self, key):
+        return self._q[key]
+
+
+class SqlWhereDict(SqlDict):
+    """
+    Обертка для фильтров where в виде словарей.
+    """
+    def __and__(self, value):
+        return SqlWhereDict({
+            'is_complex': True,
+            'op': 'AND',
+            'filters': [self.q_part, value.q_part],
+        })
+
+    def __or__(self, value):
+        return SqlWhereDict({
+            'is_complex': True,
+            'op': 'OR',
+            'filters': [self.q_part, value.q_part],
+        })
 
 
 class SqlExecute(SqlFunc):
     """
     Функция выполнения sql-запроса.
     """
-    group = 'context'
-    description = 'Функция контекста'
+    group = 'sql'
+    description = 'Функция выполнения sql-запроса'
     args_description = [
         MandatoryArg('Объект соединения', 0),
         MandatoryArg('Объект запроса', 1),
@@ -21,14 +65,12 @@ class SqlExecute(SqlFunc):
         conn = args[0]
         q = args[1].q_part
         tables_list = collect_tables(q)
-        tables = {}
         conn.open()
-        for table in tables_list:
-            t = conn.get_table(table)
-            tables[t._name] = t
+        tables = conn.get_table_multiple(tables_list)
         qb = Qbuilder(tables, q)
         query = qb.parse_query()
         data = conn.get_data(query=query)
+        conn.close()
         return data
 
 
@@ -38,12 +80,12 @@ class SqlSelect(SqlFunc):
     """
     description = 'Функция построения select-запроса'
     args_description = [
-        MandatoryArg('Базовая таблица', 0),
-        NonMandatoryArg('Список соединений', 1),
-        NonMandatoryArg('Список фильтров', 2),
-        NonMandatoryArg('Список сортировок', 3),
-        NonMandatoryArg('Список выбираемых полей', 4),
-        NonMandatoryArg('Количество строк', 5),
+        MandatoryArg('Базовая таблица', 0, [str]),
+        NonMandatoryArg('Список соединений', 1, [list, SqlDict]),
+        NonMandatoryArg('Список фильтров', 2, [list, SqlWhereDict]),
+        NonMandatoryArg('Список сортировок', 3, [list, SqlDict]),
+        NonMandatoryArg('Список выбираемых полей', 4, [list]),
+        NonMandatoryArg('Количество строк', 5, [int, str]),
     ]
 
     @classmethod
@@ -93,8 +135,15 @@ class SqlSelect(SqlFunc):
             pass
         try:
             for v in args[4]:
-                tf = v.split('.')
-                jsq['values'].append({'table': tf[0], 'field': tf[1]})
+                alias = None
+                if isinstance(v, list):
+                    tf, alias = v[0].split('.'), v[1]
+                else:
+                    tf = v.split('.')
+                value = {'table': tf[0], 'field': tf[1]}
+                if alias is not None:
+                    value['alias'] = alias
+                jsq['values'].append(value)
         except IndexError:
             pass
         try:
@@ -113,11 +162,9 @@ class SqlJoin(SqlFunc):
     """
     description = 'Функция создания соединения таблиц в запросе'
     args_description = [
-        MandatoryArg('Таблица1', 0),
-        MandatoryArg('Таблица2', 1),
-        MandatoryArg('Поле первой таблицы', 2),
-        MandatoryArg('Поле второй таблицы', 3),
-        NonMandatoryArg('Тип соединения', 4),
+        MandatoryArg('Первая таблица и поле', 0, [str]),
+        MandatoryArg('Вторая таблица и поле', 1, [str]),
+        NonMandatoryArg('Тип соединения', 2, [str]),
     ]
 
     @classmethod
@@ -126,26 +173,27 @@ class SqlJoin(SqlFunc):
 
     def _operation(self, *args):
         try:
-            type_ = args[4]
+            type_ = args[2]
         except IndexError:
             type_ = 'inner'
+        l, lf = args[0].split('.')
+        r, rf = args[1].split('.')
         return SqlDict({
-            'l': args[0], 
-            'r': args[1], 
-            'j': type_, 'on': {'l': args[2], 'r': args[3]},
+            'l': l,
+            'r': r,
+            'j': type_, 'on': {'l': lf, 'r': rf},
         })
 
 
 class SqlWhere(SqlFunc):
     """
-    Функция создания фильтров where запросе.
+    Функция создания фильтров where в запросе.
     """
-    description = 'Функция создания фильтров where запросе'
+    description = 'Функция создания фильтров where в запросе'
     args_description = [
-        MandatoryArg('Название таблицы', 0),
-        MandatoryArg('Название поля', 1),
-        MandatoryArg('Тип фильтра', 2),
-        MandatoryArg('Значение', 3),
+        MandatoryArg('Название таблицы и поля', 0, [str]),
+        MandatoryArg('Тип фильтра', 1, [str]),
+        MandatoryArg('Значение', 2, [str, int, float, list, SqlDict, datetime]),
     ]
 
     @classmethod
@@ -153,8 +201,8 @@ class SqlWhere(SqlFunc):
         return 'sql_where'
 
     def _operation(self, *args):
-        table_name, field_name = args[0], args[1]
-        op, value = args[2], args[3]
+        table_name, field_name = args[0].split('.')
+        op, value = args[1], args[2]
         try:
             value = value.q_part
         except:
@@ -170,13 +218,12 @@ class SqlWhere(SqlFunc):
 
 class SqlOrderBy(SqlFunc):
     """
-    Функция создания фильтров where запросе.
+    Функция создания упорядочивания в запросе.
     """
-    description = 'Функция создания фильтров where запросе'
+    description = 'Функция создания упорядочивания в запросе'
     args_description = [
-        MandatoryArg('Название таблицы', 0),
-        MandatoryArg('Название поля', 1),
-        MandatoryArg('Направление', 2),
+        MandatoryArg('Название таблицы и поля', 1, [str]),
+        MandatoryArg('Направление', 0, [str]),
     ]
 
     @classmethod
@@ -184,43 +231,10 @@ class SqlOrderBy(SqlFunc):
         return 'sql_orderby'
 
     def _operation(self, *args):
-        table_name, fields = args[1], args[2:]
+        table_name, field = args[1].split('.')
         ordering = args[0]
         return SqlDict({
             'table': table_name,
-            'fields': fields,
+            'fields': [field],
             'type': ordering,
-        })
-
-
-class SqlDict:
-    """
-    Обертка для select-запросов и их частей в виде словарей.
-    Используется для упрощенного сложения запросов и фильтров
-    в виде словарей.
-    """
-    def __init__(self, dict_):
-        self._q = dict_
-
-    @property
-    def q_part(self):
-        return self._q
-
-
-class SqlWhereDict(SqlDict):
-    """
-    Обертка для фильтров where в виде словарей.
-    """
-    def __and__(self, value):
-        return SqlWhereDict({
-            'is_complex': True,
-            'op': 'AND',
-            'filters': [self.q_part, value.q_part],
-        })
-
-    def __or__(self, value):
-        return SqlWhereDict({
-            'is_complex': True,
-            'op': 'OR',
-            'filters': [self.q_part, value.q_part],
         })

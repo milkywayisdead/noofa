@@ -10,7 +10,7 @@ class Mean(StatisticsFunc):
     """
     description = 'Функция нахождения среднего значения'
     args_description = [
-        MandatoryArg('Последовательность значений', 0),
+        MandatoryArg('Последовательность значений', 0, [list, pd.DataFrame]),
     ]
 
     def _operation(self, *args):
@@ -28,7 +28,7 @@ class Median(StatisticsFunc):
     """
     description = 'Функция нахождения медианы'
     args_description = [
-        MandatoryArg('Последовательность значений', 0),
+        MandatoryArg('Последовательность значений', 0, [list, pd.DataFrame]),
     ]
 
     def _operation(self, *args):
@@ -46,7 +46,7 @@ class Mode(StatisticsFunc):
     """
     description = 'Функция нахождения моды'
     args_description = [
-        MandatoryArg('Последовательность значений', 0),
+        MandatoryArg('Последовательность значений', 0, [list, pd.DataFrame]),
     ]
 
     def _operation(self, *args):
@@ -64,13 +64,13 @@ class Min(StatisticsFunc):
     """
     description = 'Выбор наименьшего числа в наборе'
     args_description = [
-        MandatoryArg('Набор чисел', 0),
+        MandatoryArg('Набор чисел', 0, [list, pd.DataFrame]),
     ]
 
     def _operation(self, *args):
         seq = args[0]
         if isinstance(seq, list):
-            return statistics.min(seq)
+            return min(seq)
         return float(seq.min())
 
 
@@ -80,13 +80,13 @@ class Max(StatisticsFunc):
     """
     description = 'Выбор наибольшего числа в наборе'
     args_description = [
-        MandatoryArg('Набор чисел', 0),
+        MandatoryArg('Набор чисел', 0, [list, pd.DataFrame]),
     ]
 
     def _operation(self, *args):
         seq = args[0]
         if isinstance(seq, list):
-            return statistics.max(seq)
+            return max(seq)
         return float(seq.max())
 
 
@@ -96,8 +96,8 @@ class Stdev(StatisticsFunc):
     """
     description = 'Функция вычисления стандартного отклонения'
     args_description = [
-        MandatoryArg('Последовательность значений', 0),
-        NonMandatoryArg('Отклонение для выборки/совокупности', 1),
+        MandatoryArg('Последовательность значений', 0, [list, pd.DataFrame]),
+        NonMandatoryArg('Число степеней свободы', 1, [int]),
     ]
 
     def _operation(self, *args):
@@ -117,8 +117,8 @@ class Variance(StatisticsFunc):
     """
     description = 'Функция вычисления дисперсии'
     args_description = [
-        MandatoryArg('Последовательность значений', 0),
-        NonMandatoryArg('Отклонение для выборки/совокупности', 1),
+        MandatoryArg('Последовательность значений', 0, [list, pd.DataFrame]),
+        NonMandatoryArg('Число степеней свободы', 1, [int]),
     ]
 
     def _operation(self, *args):
